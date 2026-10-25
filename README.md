@@ -7,7 +7,7 @@ Sistema web para que un consejo comunal emita constancias en PDF: residencia, re
 - Al aprobarla se genera el PDF, que se imprime o se envía por WhatsApp.
 - Todo queda registrado en un historial.
 
-**Stack:** SvelteKit 3 + TypeScript (strict) + Tailwind CSS 4, desplegado en Cloudflare Pages, con Cloudflare D1 (base de datos) y R2 (PDFs y logo). Todo en la capa gratuita.
+**Stack:** SvelteKit 3 + TypeScript (strict) + Tailwind CSS 4, desplegado en Cloudflare Workers (con assets estáticos), con Cloudflare D1 (base de datos) y R2 (PDFs y logo). Todo en la capa gratuita.
 
 ## Requisitos
 
@@ -34,7 +34,7 @@ pnpm dev                                    # http://localhost:5173
 
 - Panel administrativo: <http://localhost:5173/admin>.
 - Para empezar de cero: `pnpm db:reset:local` (borra el D1 local y vuelve a migrar).
-- Para probar la build real dentro de workerd: `pnpm preview` (<http://localhost:4173>).
+- Para probar la build real dentro de workerd: `pnpm preview` (<http://localhost:4173>, usa `wrangler dev`).
 - Para consultar el D1 local: `pnpm exec wrangler d1 execute damos-fe-db --local --command "SELECT * FROM signers"`.
 
 ### Calidad
@@ -46,7 +46,7 @@ pnpm lint     # Prettier + ESLint
 pnpm format   # formatea el código
 ```
 
-Si cambias `wrangler.toml`, ejecuta `pnpm gen` para regenerar `worker-configuration.d.ts`.
+`worker-configuration.d.ts` (tipos de los bindings) se genera solo en `pnpm install`, `pnpm build` y `pnpm check`; no se sube a git. Para regenerarlo a mano: `pnpm gen`.
 
 ## Migraciones
 
@@ -65,7 +65,9 @@ pnpm db:migrate:remote   # D1 en Cloudflare (producción)
 
 > `0002_seed.sql` contiene datos **ficticios**: un consejo, 3 tipos de constancia y 3 firmantes. En producción, después de migrar, actualiza los datos del consejo y los firmantes desde el panel (o con SQL mientras ese panel no exista).
 
-## Despliegue en Cloudflare Pages
+## Despliegue en Cloudflare Workers
+
+La app se despliega como un **Worker con assets estáticos**, el modelo que Cloudflare recomienda hoy en lugar de Pages. También es gratis y usa los mismos D1 y R2. Todo se configura en `wrangler.toml`: `main` y `[assets]` apuntan a lo que genera `adapter-cloudflare` en `.svelte-kit/cloudflare`.
 
 Configuración de una sola vez:
 
@@ -73,15 +75,15 @@ Configuración de una sola vez:
 2. Crea la base de datos con `pnpm exec wrangler d1 create damos-fe-db` y copia el `database_id` en `wrangler.toml`.
 3. Habilita R2 en el dashboard y crea el bucket con `pnpm exec wrangler r2 bucket create damos-fe-files`.
 4. Sube el repositorio a GitHub.
-5. En Cloudflare, ve a **Workers & Pages → Create → Pages → Connect to Git** y elige el repositorio:
-   - Framework preset: `SvelteKit` (o `None`).
+5. En Cloudflare, ve a **Workers & Pages → Create application → Import a repository** y elige el repositorio:
+   - Project name: `damos-fe` (debe coincidir con `name` en `wrangler.toml`).
    - Build command: `pnpm build`.
-   - Build output directory: `.svelte-kit/cloudflare`.
-   - Variables de build: `NODE_VERSION=22.18.0` y `PNPM_VERSION=12.14.0`.
-6. Los bindings D1 (`DB`) y R2 (`FILES`) se leen de `wrangler.toml`. Cuando el archivo tiene `pages_build_output_dir`, Pages lo toma como fuente de verdad y no se configuran en el dashboard.
-7. Ajusta `APP_URL` en `wrangler.toml` con la URL pública (por ejemplo `https://damos-fe.pages.dev`). En local, `.dev.vars` la sobrescribe.
+   - Deploy command: `npx wrangler deploy`.
+   - Variables de build: `NODE_VERSION=22.18.0` (pnpm se detecta por `packageManager`).
+6. Los bindings (`DB`, `FILES`, `ASSETS`) y las variables vienen de `wrangler.toml`; no hace falta agregarlos en el dashboard.
+7. Ajusta `APP_URL` en `wrangler.toml` con la URL pública (por ejemplo `https://damos-fe.<subdominio>.workers.dev`). En local, `.dev.vars` la sobrescribe.
 
-Después, cada `git push` a `main` despliega a producción y cada rama genera una vista previa.
+Después, cada `git push` a `main` construye y despliega automáticamente (Workers Builds). Para desplegar a mano desde tu máquina: `pnpm run deploy`.
 
 Antes del primer uso en producción:
 

@@ -5,10 +5,10 @@
 	"type": "module",
 	"scripts": {
 		"dev": "vite dev",
-		"build": "wrangler types --check && vite build",
-		"preview": "pnpm build && wrangler pages dev .svelte-kit/cloudflare --port 4173",
-		"prepare": "svelte-kit sync || echo \"\"",
-		"check": "wrangler types --check && svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+		"build": "wrangler types >/dev/null && vite build",
+		"preview": "pnpm build && wrangler dev --port 4173",
+		"prepare": "wrangler types >/dev/null && svelte-kit sync || echo \"\"",
+		"check": "wrangler types >/dev/null && svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"lint": "prettier --check . && eslint .",
 		"format": "prettier --write .",
@@ -18,7 +18,8 @@
 		"db:migrate:local": "wrangler d1 migrations apply damos-fe-db --local",
 		"db:migrate:remote": "wrangler d1 migrations apply damos-fe-db --remote",
 		"db:reset:local": "rm -rf .wrangler/state/v3/d1 && pnpm db:migrate:local",
-		"create-admin": "node scripts/create-admin.ts"
+		"create-admin": "node scripts/create-admin.ts",
+		"deploy": "pnpm build && wrangler deploy"
 	},
 	"devDependencies": {
 		"@eslint/js": "^10.0.1",
