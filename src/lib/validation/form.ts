@@ -32,7 +32,7 @@ export function cleanMultiline(value: FormDataEntryValue | null): string {
 export function readValues<Field extends string>(
 	form: FormData,
 	fields: readonly Field[],
-	multiline: readonly Field[] = []
+	multiline: readonly NoInfer<Field>[] = []
 ): Record<Field, string> {
 	return Object.fromEntries(
 		fields.map((field) => [
@@ -46,7 +46,7 @@ export function readValues<Field extends string>(
 export function checkPresence<Field extends string>(
 	values: Record<Field, string>,
 	maxLength: Record<Field, number>,
-	optional: readonly Field[] = []
+	optional: readonly NoInfer<Field>[] = []
 ): FormErrors<Field> {
 	const errors: FormErrors<Field> = {};
 	for (const field of Object.keys(maxLength) as Field[]) {
