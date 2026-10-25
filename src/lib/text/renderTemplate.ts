@@ -28,7 +28,10 @@ export interface CertificateTemplateContext extends TemplateContext {
 	};
 	certificate: {
 		knownSince: string;
+		/** "trece días del mes de julio de dos mil veintiséis" */
 		issuedAtWords: string;
+		/** Same, with its preposition: "a los trece días…" / "al primer día…". */
+		issuedOn: string;
 	};
 	signers: {
 		pronoun: string;
@@ -53,11 +56,14 @@ export function extractPlaceholders(template: string): string[] {
 	return [...new Set([...template.matchAll(PLACEHOLDER)].map((match) => match[1]))];
 }
 
-/** Placeholders in `template` that `context` cannot resolve to a string or number. */
+/**
+ * Placeholders in `template` that `context` cannot resolve to a number or a non-blank string.
+ * Blank strings count as missing: they would leave a gap in the document.
+ */
 export function findMissingPlaceholders(template: string, context: TemplateContext): string[] {
 	return extractPlaceholders(template).filter((path) => {
 		const value = lookup(context, path);
-		return typeof value !== 'string' && typeof value !== 'number';
+		return typeof value === 'number' ? false : typeof value !== 'string' || value.trim() === '';
 	});
 }
 

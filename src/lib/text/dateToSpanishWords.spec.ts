@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { dateToSpanishWords } from './dateToSpanishWords';
+import { dateToSpanishPhrase, dateToSpanishWords } from './dateToSpanishWords';
 import { numberToSpanishWords } from './numberToSpanishWords';
 
 describe('numberToSpanishWords', () => {
@@ -71,5 +71,16 @@ describe('dateToSpanishWords', () => {
 	it('rejects invalid dates', () => {
 		expect(() => dateToSpanishWords('2026-02-30')).toThrow(RangeError);
 		expect(() => dateToSpanishWords('13/07/2026')).toThrow(RangeError);
+	});
+});
+
+describe('dateToSpanishPhrase', () => {
+	it('adds the right preposition', () => {
+		expect(dateToSpanishPhrase('2026-07-13')).toBe(
+			'a los trece días del mes de julio de dos mil veintiséis'
+		);
+		expect(dateToSpanishPhrase('2026-07-01')).toBe(
+			'al primer día del mes de julio de dos mil veintiséis'
+		);
 	});
 });

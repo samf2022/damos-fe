@@ -72,3 +72,15 @@ export function dateToSpanishWords(
 		day === 1 ? 'primer día' : `${numberToSpanishWords(day, { masculineNoun: true })} días`;
 	return `${dayWords} del mes de ${SPANISH_MONTHS[month - 1]} de ${numberToSpanishWords(year)}`;
 }
+
+/**
+ * The same date with its preposition, as it reads after "Constancia que se expide…":
+ * "a los trece días del mes de…" or "al primer día del mes de…".
+ */
+export function dateToSpanishPhrase(
+	input: string | Date,
+	timeZone: string = VENEZUELA_TIME_ZONE
+): string {
+	const words = dateToSpanishWords(input, timeZone);
+	return words.startsWith('primer ') ? `al ${words}` : `a los ${words}`;
+}

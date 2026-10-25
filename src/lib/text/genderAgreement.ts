@@ -5,6 +5,7 @@ const GENDERED_WORDS = {
 	article: { M: 'el', F: 'la' },
 	citizen: { M: 'ciudadano', F: 'ciudadana' },
 	venezuelan: { M: 'venezolano', F: 'venezolana' },
+	foreign: { M: 'extranjero', F: 'extranjera' },
 	domiciled: { M: 'domiciliado', F: 'domiciliada' },
 	resident: { M: 'residenciado', F: 'residenciada' },
 	known: { M: 'conocido', F: 'conocida' },

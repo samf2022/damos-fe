@@ -47,4 +47,8 @@ describe('placeholder inspection', () => {
 	it('finds placeholders missing from the context', () => {
 		expect(findMissingPlaceholders(template, context)).toEqual(['x.y']);
 	});
+
+	it('treats blank strings as missing', () => {
+		expect(findMissingPlaceholders('{{a}} {{b}}', { a: '  ', b: 0 })).toEqual(['a']);
+	});
 });
