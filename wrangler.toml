@@ -10,8 +10,7 @@ APP_URL = "http://localhost:5173"
 [[d1_databases]]
 binding = "DB"
 database_name = "damos-fe-db"
-# TODO: replace with the real id from `wrangler d1 create damos-fe-db`
-database_id = "00000000-0000-0000-0000-000000000000"
+database_id = "37a1c91d-0775-4886-9dd8-9a3be7d3050f"
 migrations_dir = "migrations"
 
 [[r2_buckets]]
