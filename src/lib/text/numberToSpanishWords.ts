@@ -31,7 +31,18 @@ const UNITS = [
 	'veintinueve'
 ];
 
-const TENS = ['', '', '', 'treinta', 'cuarenta', 'cincuenta', 'sesenta', 'setenta', 'ochenta', 'noventa'];
+const TENS = [
+	'',
+	'',
+	'',
+	'treinta',
+	'cuarenta',
+	'cincuenta',
+	'sesenta',
+	'setenta',
+	'ochenta',
+	'noventa'
+];
 
 const HUNDREDS = [
 	'',

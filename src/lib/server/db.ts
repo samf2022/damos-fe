@@ -1,5 +1,3 @@
-import { error } from '@sveltejs/kit';
-
 import type { AdminRole, CertificateStatus, CertificateTypeCode, Gender } from '#lib/types.ts';
 
 export type { AdminRole, CertificateStatus, CertificateTypeCode, Gender };
@@ -162,13 +160,6 @@ export function createDb(d1: D1Database): Db {
 			await d1.batch(statements);
 		}
 	};
-}
-
-/** Returns the database for the current request, or a 500 if the binding is missing. */
-export function getDb(platform: App.Platform | undefined): Db {
-	const d1 = platform?.env?.DB;
-	if (!d1) error(500, 'D1 binding "DB" is not available');
-	return createDb(d1);
 }
 
 export function newId(): string {

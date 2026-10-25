@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createDb, fromDbBoolean, getDb, newId, toDbBoolean, type SignerRow } from './db';
+import { createDb, fromDbBoolean, newId, toDbBoolean, type SignerRow } from './db';
 import { createMemoryD1 } from './testing/memoryD1';
 
 describe('createDb', () => {
@@ -33,12 +33,6 @@ describe('createDb', () => {
 		await expect(db.batch([insert(newId(), 'V-1'), insert(newId(), 'V-1')])).rejects.toThrow();
 		const count = await db.first<{ n: number }>('SELECT count(*) AS n FROM residents');
 		expect(count?.n).toBe(0);
-	});
-});
-
-describe('getDb', () => {
-	it('throws a 500 when the binding is missing', () => {
-		expect(() => getDb(undefined)).toThrow();
 	});
 });
 

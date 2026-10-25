@@ -26,7 +26,9 @@ describe('normalizeVenezuelanPhone', () => {
 
 describe('buildWhatsAppLink', () => {
 	it('builds a wa.me link with an encoded message', () => {
-		expect(buildWhatsAppLink('0412-1234567', 'Hola, su constancia N.º 12 está lista & firmada')).toBe(
+		expect(
+			buildWhatsAppLink('0412-1234567', 'Hola, su constancia N.º 12 está lista & firmada')
+		).toBe(
 			'https://wa.me/584121234567?text=Hola%2C%20su%20constancia%20N.%C2%BA%2012%20est%C3%A1%20lista%20%26%20firmada'
 		);
 	});

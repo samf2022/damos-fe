@@ -63,10 +63,7 @@ export async function hashPassword(password: string): Promise<PasswordHash> {
 	};
 }
 
-export async function verifyPassword(
-	password: string,
-	stored: PasswordHash
-): Promise<boolean> {
+export async function verifyPassword(password: string, stored: PasswordHash): Promise<boolean> {
 	const [algorithm, iterationsText, expected] = stored.hash.split('$');
 	const iterations = Number(iterationsText);
 	if (algorithm !== ALGORITHM || !Number.isInteger(iterations) || iterations <= 0 || !expected) {
