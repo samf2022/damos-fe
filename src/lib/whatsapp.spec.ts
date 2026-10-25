@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildWhatsAppLink, normalizeVenezuelanPhone } from './whatsapp';
+import { buildWhatsAppLink, formatVenezuelanPhone, normalizeVenezuelanPhone } from './whatsapp';
 
 describe('normalizeVenezuelanPhone', () => {
 	it.each([
@@ -39,5 +39,16 @@ describe('buildWhatsAppLink', () => {
 
 	it('returns null for invalid numbers', () => {
 		expect(buildWhatsAppLink('123', 'Hola')).toBeNull();
+	});
+});
+
+describe('formatVenezuelanPhone', () => {
+	it('formats valid numbers as 0XXX-XXXXXXX', () => {
+		expect(formatVenezuelanPhone('+58 412 123 45 67')).toBe('0412-1234567');
+		expect(formatVenezuelanPhone('02125551234')).toBe('0212-5551234');
+	});
+
+	it('returns null for invalid numbers', () => {
+		expect(formatVenezuelanPhone('123')).toBeNull();
 	});
 });

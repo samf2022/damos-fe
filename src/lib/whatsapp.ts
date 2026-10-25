@@ -35,3 +35,11 @@ export function buildWhatsAppLink(phone: string, message: string): string | null
 	// encodeURIComponent uses %20 for spaces, which is what WhatsApp documents.
 	return message ? `${base}?text=${encodeURIComponent(message)}` : base;
 }
+
+/** Local display/storage format: `584121234567` → `0412-1234567`. `null` if invalid. */
+export function formatVenezuelanPhone(phone: string): string | null {
+	const normalized = normalizeVenezuelanPhone(phone);
+	if (!normalized) return null;
+	const national = `0${normalized.slice(2)}`;
+	return `${national.slice(0, 4)}-${national.slice(4)}`;
+}
