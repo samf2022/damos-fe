@@ -9,7 +9,10 @@ const GENDERED_WORDS = {
 	domiciled: { M: 'domiciliado', F: 'domiciliada' },
 	resident: { M: 'residenciado', F: 'residenciada' },
 	known: { M: 'conocido', F: 'conocida' },
-	interested: { M: 'el interesado', F: 'la interesada' }
+	interested: { M: 'el interesado', F: 'la interesada' },
+	toCitizen: { M: 'al ciudadano', F: 'a la ciudadana' },
+	aCitizen: { M: 'un ciudadano', F: 'una ciudadana' },
+	ofThem: { M: 'de él', F: 'de ella' }
 } as const satisfies Record<string, Record<Gender, string>>;
 
 export type GenderedWord = keyof typeof GENDERED_WORDS;
@@ -50,4 +53,15 @@ export function residentGenderedWords(gender: Gender): Record<GenderedWord, stri
 	return Object.fromEntries(
 		Object.entries(GENDERED_WORDS).map(([word, forms]) => [word, forms[gender]])
 	) as Record<GenderedWord, string>;
+}
+
+/** Plural forms for the group of signers: feminine only when every signer is female. */
+export function signersGroupWords(genders: readonly Gender[]) {
+	const feminine = genders.length > 0 && genders.every((gender) => gender === 'F');
+	return {
+		pronoun: feminine ? 'Nosotras' : 'Nosotros',
+		nationality: feminine ? 'venezolanas' : 'venezolanos',
+		domiciled: feminine ? 'domiciliadas' : 'domiciliados',
+		spokespersons: feminine ? 'Voceras' : 'Voceros'
+	};
 }

@@ -103,10 +103,12 @@ describe('certificate review', () => {
 		});
 		expect(certificate?.verification_code).toMatch(/^[2-9A-HJ-NP-Z]{10}$/);
 		expect(certificate?.rendered_body).toMatch(
-			/^Nosotras, integrantes del Consejo Comunal Ejemplo/
+			/^Nosotras, MARÍA FERNANDA EJEMPLO PRUEBA y ANA CAROLINA MUESTRA TEST, venezolanas,/
 		);
 		expect(certificate?.rendered_body).toContain('desde hace más de veinte (20) años');
-		expect(certificate?.rendered_body).toContain('a los trece días del mes de julio');
+		expect(certificate?.rendered_body).toContain(
+			'a los trece días del mes de julio de dos mil veintiséis. (13-07-2026).'
+		);
 		expect(certificate?.rendered_body).not.toContain('{{');
 
 		const signers = await db.all<{ full_name: string; display_order: number }>(
@@ -187,6 +189,10 @@ describe('certificate review', () => {
 			now: NOW
 		};
 
+		expect(await approveCertificate(db, { ...base, signerIds: [SIGNERS[0]] })).toEqual({
+			ok: false,
+			reason: 'no_signers'
+		});
 		expect(await approveCertificate(db, { ...base, signerIds: [] })).toEqual({
 			ok: false,
 			reason: 'no_signers'

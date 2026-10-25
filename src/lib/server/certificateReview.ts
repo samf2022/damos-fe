@@ -1,4 +1,4 @@
-import { renderCertificateBody } from '#lib/certificates/renderCertificateBody.ts';
+import { MIN_SIGNERS, renderCertificateBody } from '#lib/certificates/renderCertificateBody.ts';
 import { VENEZUELA_TIME_ZONE } from '#lib/text/dateToSpanishWords.ts';
 import type { ResidentSnapshot } from '#lib/types.ts';
 import {
@@ -41,7 +41,7 @@ function yearInVenezuela(date: Date): string {
 
 export type ReviewSigner = Pick<
 	SignerRow,
-	'id' | 'full_name' | 'short_name' | 'role_title' | 'phone' | 'gender'
+	'id' | 'full_name' | 'short_name' | 'national_id' | 'role_title' | 'phone' | 'gender'
 > & {
 	/** Default signer for this certificate type. */
 	is_default: 0 | 1;
@@ -90,7 +90,7 @@ export async function getReviewData(db: Db, certificateId: string): Promise<Revi
 		}>('SELECT * FROM residents WHERE id = ?', certificate.resident_id),
 		db.first<CouncilSettingsRow>('SELECT * FROM council_settings LIMIT 1'),
 		db.all<ReviewSigner>(
-			`SELECT s.id, s.full_name, s.short_name, s.role_title, s.phone, s.gender,
+			`SELECT s.id, s.full_name, s.short_name, s.national_id, s.role_title, s.phone, s.gender,
 			        CASE WHEN cts.signer_id IS NULL THEN 0 ELSE 1 END AS is_default,
 			        COALESCE(cts.display_order, 1000 + s.display_order) AS display_order
 			   FROM signers s
@@ -149,14 +149,18 @@ export async function approveCertificate(
 	if (!data.council) return { ok: false, reason: 'no_council' };
 
 	const signers = data.signers.filter((signer) => input.signerIds.includes(signer.id));
-	if (signers.length === 0) return { ok: false, reason: 'no_signers' };
+	if (signers.length < MIN_SIGNERS) return { ok: false, reason: 'no_signers' };
 
 	const issuedAt = nowIso(now);
 	const { body, missing } = renderCertificateBody({
 		template: data.certificate.type_template,
 		council: data.council,
 		resident: data.snapshot,
-		signerGenders: signers.map((signer) => signer.gender),
+		signers: signers.map((signer) => ({
+			fullName: signer.full_name,
+			nationalId: signer.national_id,
+			gender: signer.gender
+		})),
 		knownSinceText: input.knownSinceText,
 		issuedAt
 	});

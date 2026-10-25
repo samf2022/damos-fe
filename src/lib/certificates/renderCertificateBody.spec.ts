@@ -1,5 +1,7 @@
-import { describe, expect, it } from 'vitest';
-import type { ResidentSnapshot } from '#lib/types.ts';
+import { beforeAll, describe, expect, it } from 'vitest';
+import { createDb } from '#lib/server/db.ts';
+import { createMemoryD1 } from '#lib/server/testing/memoryD1.ts';
+import type { CertificateTypeCode, ResidentSnapshot } from '#lib/types.ts';
 import {
 	buildCertificateContext,
 	renderCertificateBody,
@@ -7,80 +9,115 @@ import {
 	type CertificateBodyInput
 } from './renderCertificateBody';
 
+// All people and places below are fictitious.
 const resident: ResidentSnapshot = {
 	nationalId: 'V-12345678',
 	firstNames: 'María José',
-	lastNames: 'Pérez',
+	lastNames: 'Pérez Cedeño',
 	gender: 'F',
 	maritalStatus: 'single',
-	occupation: null,
-	streetAddress: 'Calle 5',
-	houseNumber: '12',
+	occupation: 'Costurera',
+	streetAddress: 'calle Los Pinos',
+	houseNumber: '05',
 	phone: '0412-1234567'
 };
 
-const base: CertificateBodyInput = {
-	template:
-		'{{signers.pronoun}}, integrantes del {{council.name}}, hacemos constar que {{resident.article}} {{resident.citizen}} {{resident.fullName}}, {{resident.nationality}}, {{resident.maritalStatus}}, C.I. {{resident.nationalId}}, {{resident.domiciled}} en {{resident.address}}, desde hace {{certificate.knownSince}}. Expedida en {{council.city}}, {{certificate.issuedOn}}.',
-	council: {
-		name: 'Consejo Comunal Ejemplo',
-		state: 'Estado Ejemplo',
-		municipality: 'Municipio Ejemplo',
-		parish: 'Parroquia Ejemplo',
-		sector_address: 'Sector Ejemplo',
-		city: 'Ciudad Ejemplo'
-	},
-	resident,
-	signerGenders: ['F', 'F'],
-	knownSinceText: 'más de 20 años',
-	issuedAt: '2026-07-13T15:00:00.000Z'
+const council = {
+	name: 'Consejo Comunal “Los Pinos”',
+	state: 'Sucre',
+	municipality: 'Bermúdez',
+	parish: 'Santa Catalina',
+	sector_address: 'el Sector “Los Pinos”, vía principal',
+	city: 'Carúpano'
 };
 
-describe('renderCertificateBody', () => {
-	it('renders a complete body with gender agreement', () => {
-		const { body, missing } = renderCertificateBody(base);
+const signers = [
+	{ fullName: 'Ana Luisa Gómez', nationalId: 'V-16842708', gender: 'F' as const },
+	{ fullName: 'Carmen Rosa Díaz', nationalId: 'V-4935094', gender: 'F' as const }
+];
+
+let templates: Record<CertificateTypeCode, string>;
+beforeAll(async () => {
+	const db = createDb(createMemoryD1({ seed: true }));
+	const rows = await db.all<{ code: CertificateTypeCode; body_template: string }>(
+		'SELECT code, body_template FROM certificate_types'
+	);
+	templates = Object.fromEntries(rows.map((r) => [r.code, r.body_template])) as typeof templates;
+});
+
+const input = (overrides: Partial<CertificateBodyInput> = {}): CertificateBodyInput => ({
+	template: templates.residence,
+	council,
+	resident,
+	signers,
+	knownSinceText: 'más de 20 años',
+	issuedAt: '2026-07-13T15:00:00.000Z',
+	...overrides
+});
+
+describe('renderCertificateBody with the real templates', () => {
+	it('renders the residence certificate like the paper version', () => {
+		const { body, missing } = renderCertificateBody(input());
 		expect(missing).toEqual([]);
 		expect(body).toBe(
-			'Nosotras, integrantes del Consejo Comunal Ejemplo, hacemos constar que la ciudadana María José Pérez, venezolana, soltera, C.I. V-12345678, domiciliada en Calle 5, casa 12, desde hace más de 20 años. Expedida en Ciudad Ejemplo, a los trece días del mes de julio de dos mil veintiséis.'
+			'Nosotras, ANA LUISA GÓMEZ y CARMEN ROSA DÍAZ, venezolanas, mayores de edad, hábiles en derecho, titulares de las Cédulas de Identidad Nº 16.842.708 y 4.935.094, respectivamente, domiciliadas en el Sector “Los Pinos”, vía principal, parroquia Santa Catalina, municipio Bermúdez del estado Sucre; en nuestra condición de Voceras del Consejo Comunal “Los Pinos”, hacemos constar que conocemos de vista, trato y comunicación desde hace más de 20 años, a la ciudadana MARÍA JOSÉ PÉREZ CEDEÑO, venezolana, mayor de edad, soltera, costurera, hábil en derecho, titular de la Cédula de Identidad Nº 12.345.678, domiciliada en calle Los Pinos, casa N° 05 de nuestro sector. Constancia que expedimos a solicitud de parte interesada en Carúpano, a los trece días del mes de julio de dos mil veintiséis. (13-07-2026).'
 		);
 	});
 
-	it('agrees with a male resident, mixed signers and the first day of the month', () => {
-		const { body } = renderCertificateBody({
-			...base,
-			resident: { ...resident, gender: 'M', firstNames: 'José', maritalStatus: 'married' },
-			signerGenders: ['F', 'M'],
-			issuedAt: '2026-08-01T15:00:00.000Z'
-		});
-		expect(body).toContain('Nosotros,');
-		expect(body).toContain('el ciudadano José Pérez, venezolano, casado');
-		expect(body).toContain('domiciliado');
-		expect(body).toContain('al primer día del mes de agosto');
+	it('adds the good-conduct statement with gender agreement', () => {
+		const { body } = renderCertificateBody(
+			input({
+				template: templates.residence_conduct,
+				resident: { ...resident, gender: 'M', firstNames: 'José', maritalStatus: 'married' },
+				signers: [...signers, { fullName: 'Luis Ríos', nationalId: 'V-5880762', gender: 'M' }]
+			})
+		);
+		expect(body).toMatch(/^Nosotros, ANA LUISA GÓMEZ, CARMEN ROSA DÍAZ y LUIS RÍOS, venezolanos,/);
+		expect(body).toContain('16.842.708, 4.935.094 y 5.880.762, respectivamente, domiciliados');
+		expect(body).toContain('condición de Voceros');
+		expect(body).toContain('al ciudadano JOSÉ PÉREZ CEDEÑO, venezolano, mayor de edad, casado');
+		expect(body).toContain(
+			'del citado sector y por el conocimiento que de él tenemos damos fe que es un ciudadano de BUENA CONDUCTA.'
+		);
+	});
+
+	it('conduct-only does not certify the address', () => {
+		const { body, missing } = renderCertificateBody(input({ template: templates.conduct }));
+		expect(missing).toEqual([]);
+		expect(body).not.toContain('calle Los Pinos');
+		expect(body).toContain('que de ella tenemos damos fe que es una ciudadana de BUENA CONDUCTA');
+	});
+
+	it('omits the occupation when unknown and uses "al primer día"', () => {
+		const { body, missing } = renderCertificateBody(
+			input({ resident: { ...resident, occupation: null }, issuedAt: '2026-08-01T15:00:00.000Z' })
+		);
+		expect(missing).toEqual([]);
+		expect(body).toContain('mayor de edad, soltera, hábil en derecho');
+		expect(body).toContain('al primer día del mes de agosto de dos mil veintiséis. (01-08-2026).');
 	});
 
 	it('uses "extranjero/a" for E- national ids', () => {
-		const context = buildCertificateContext({
-			...base,
-			resident: { ...resident, nationalId: 'E-81234567' }
-		});
+		const context = buildCertificateContext(
+			input({ resident: { ...resident, nationalId: 'E-81234567' } })
+		);
 		expect(context.resident.nationality).toBe('extranjera');
+		expect(context.resident.nationalIdNumber).toBe('E-81.234.567');
 	});
 
-	it('reports blank values that would leave gaps', () => {
-		const { missing } = renderCertificateBody({
-			...base,
-			knownSinceText: '',
-			resident: { ...resident, maritalStatus: null }
-		});
-		expect(missing).toEqual(['resident.maritalStatus', 'certificate.knownSince']);
+	it('reports blank required values', () => {
+		const { missing } = renderCertificateBody(
+			input({ knownSinceText: '', resident: { ...resident, maritalStatus: null } })
+		);
+		expect(missing).toEqual(['certificate.knownSince', 'resident.maritalStatus']);
 	});
 });
 
 describe('residentAddress', () => {
 	it('adds the house number when present', () => {
-		expect(residentAddress({ streetAddress: 'Calle 5', houseNumber: null })).toBe('Calle 5');
-		expect(residentAddress({ streetAddress: 'Calle 5', houseNumber: '12' })).toBe(
-			'Calle 5, casa 12'
+		expect(residentAddress({ streetAddress: 'calle 5', houseNumber: null })).toBe('calle 5');
+		expect(residentAddress({ streetAddress: 'calle 5', houseNumber: '12' })).toBe(
+			'calle 5, casa N° 12'
 		);
 	});
 });

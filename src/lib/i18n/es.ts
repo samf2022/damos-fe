@@ -150,7 +150,8 @@ export const es = {
 			missing: 'Faltan datos para completar el texto:',
 			knownSince: 'Tiempo viviendo en la comunidad',
 			signers: 'Firmantes',
-			signersHint: 'Por defecto, los firmantes asignados a este tipo de constancia.',
+			signersHint:
+				'Al menos dos. Por defecto, los asignados a este tipo de constancia, en el orden en que aparecerán.',
 			approve: 'Aprobar y emitir',
 			approving: 'Aprobando…',
 			reject: 'Rechazar solicitud',
@@ -172,7 +173,7 @@ export const es = {
 			errors: {
 				not_found: 'La solicitud no existe.',
 				already_reviewed: 'Esta solicitud ya fue revisada por otra persona. Recarga la página.',
-				no_signers: 'Selecciona al menos un firmante.',
+				no_signers: 'Selecciona al menos dos firmantes: el texto está redactado en plural.',
 				no_council: 'Faltan los datos del consejo comunal. Complétalos en «Datos del consejo».',
 				template_incomplete: 'Faltan datos para completar el texto de la constancia.',
 				reason_required: 'Escribe el motivo del rechazo (al menos 5 caracteres).',
@@ -228,6 +229,8 @@ export const es = {
 				parish: 'Parroquia',
 				placeNameHint: 'Solo el nombre: el texto ya antepone «Estado», «Municipio» o «Parroquia».',
 				sectorAddress: 'Sector y dirección',
+				sectorAddressHint:
+					'Se lee después de «domiciliadas en …». Ejemplo: el Sector “9 de Abril”, vía Carúpano-San José',
 				city: 'Ciudad o población',
 				cityHint: 'Donde se expide: «Constancia que se expide en …».',
 				validityMonths: 'Vigencia (meses)',

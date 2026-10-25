@@ -4,7 +4,7 @@ export interface TemplateContext {
 }
 
 /**
- * Variables available to certificate body templates (see migrations/0002_seed.sql).
+ * Variables available to certificate body templates (see migrations/0004_real_templates.sql).
  * Built from the resident snapshot, council settings and signers when a certificate is approved.
  */
 export interface CertificateTemplateContext extends TemplateContext {
@@ -13,16 +13,30 @@ export interface CertificateTemplateContext extends TemplateContext {
 		state: string;
 		municipality: string;
 		parish: string;
+		/** Reads after "domiciliadas en …": "el Sector “9 de Abril”, vía …". */
 		sectorAddress: string;
 		city: string;
 	};
 	resident: {
+		/** Uppercase, as in the paper certificates. */
 		fullName: string;
+		/** `V-12887351` */
 		nationalId: string;
+		/** `12.887.351` */
+		nationalIdNumber: string;
 		maritalStatus: string;
+		/** ", chofer" or "" when unknown (optional placeholder). */
+		occupationPart: string;
+		/** "calle La Pimienta, casa N° 05" */
 		address: string;
 		article: string;
 		citizen: string;
+		/** "al ciudadano" / "a la ciudadana" */
+		toCitizen: string;
+		/** "un ciudadano" / "una ciudadana" */
+		aCitizen: string;
+		/** "de él" / "de ella" */
+		ofThem: string;
 		nationality: string;
 		domiciled: string;
 	};
@@ -32,9 +46,22 @@ export interface CertificateTemplateContext extends TemplateContext {
 		issuedAtWords: string;
 		/** Same, with its preposition: "a los trece días…" / "al primer día…". */
 		issuedOn: string;
+		/** "13-07-2026" */
+		issuedDate: string;
 	};
 	signers: {
+		/** "Nosotras" / "Nosotros" */
 		pronoun: string;
+		/** "ANA PÉREZ, LUISA DÍAZ y CARMEN RÍOS" */
+		names: string;
+		/** "16.842.708, 4.935.094 y 5.880.762" */
+		nationalIds: string;
+		/** "venezolanas" / "venezolanos" */
+		nationality: string;
+		/** "domiciliadas" / "domiciliados" */
+		domiciled: string;
+		/** "Voceras" / "Voceros" */
+		spokespersons: string;
 	};
 }
 

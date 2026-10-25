@@ -3,6 +3,7 @@
 	import { resolve } from '$app/paths';
 	import StatusBadge from '#lib/components/StatusBadge.svelte';
 	import {
+		MIN_SIGNERS,
 		renderCertificateBody,
 		residentAddress
 	} from '#lib/certificates/renderCertificateBody.ts';
@@ -33,9 +34,9 @@
 					template: certificate.type_template,
 					council: data.council,
 					resident: data.snapshot,
-					signerGenders: data.signers
+					signers: data.signers
 						.filter((s) => selectedSignerIds.includes(s.id))
-						.map((s) => s.gender),
+						.map((s) => ({ fullName: s.full_name, nationalId: s.national_id, gender: s.gender })),
 					knownSinceText: knownSince,
 					issuedAt: new Date().toISOString()
 				})
@@ -184,7 +185,7 @@
 
 				<button
 					disabled={submitting !== null ||
-						selectedSignerIds.length === 0 ||
+						selectedSignerIds.length < MIN_SIGNERS ||
 						!preview ||
 						preview.missing.length > 0}
 					class="w-full rounded-md bg-green-700 px-4 py-2 font-medium text-white hover:bg-green-800 disabled:opacity-50"

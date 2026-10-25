@@ -135,6 +135,7 @@
 						name="sector_address"
 						label={t.fields.sectorAddress}
 						value={value('sector_address')}
+						hint={t.fields.sectorAddressHint}
 						error={error('sector_address')}
 						maxlength={160}
 					/>
