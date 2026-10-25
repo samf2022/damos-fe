@@ -81,7 +81,7 @@ Configuración de una sola vez:
    - Deploy command: `npx wrangler deploy`.
    - Variables de build: `NODE_VERSION=22.18.0` (pnpm se detecta por `packageManager`).
 6. Los bindings (`DB`, `FILES`, `ASSETS`) y las variables vienen de `wrangler.toml`; no hace falta agregarlos en el dashboard.
-7. Ajusta `APP_URL` en `wrangler.toml` con la URL pública (por ejemplo `https://damos-fe.<subdominio>.workers.dev`). En local, `.dev.vars` la sobrescribe.
+7. Ajusta `APP_URL` en `wrangler.toml` con la URL pública (actualmente `https://damos-fe.samf0794.workers.dev`). En local, `.dev.vars` la sobrescribe.
 
 Después, cada `git push` a `main` construye y despliega automáticamente (Workers Builds). Para desplegar a mano desde tu máquina: `pnpm run deploy`.
 

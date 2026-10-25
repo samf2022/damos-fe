@@ -13,7 +13,7 @@ directory = ".svelte-kit/cloudflare"
 enabled = true
 
 [vars]
-APP_URL = "http://localhost:5173"
+APP_URL = "https://damos-fe.samf0794.workers.dev"
 
 [[d1_databases]]
 binding = "DB"
