@@ -1,9 +1,8 @@
 import { error } from '@sveltejs/kit';
 
-export type Gender = 'F' | 'M';
-export type CertificateTypeCode = 'residence' | 'residence_conduct' | 'conduct';
-export type CertificateStatus = 'pending' | 'approved' | 'rejected';
-export type AdminRole = 'admin' | 'reviewer';
+import type { AdminRole, CertificateStatus, CertificateTypeCode, Gender } from '#lib/types';
+
+export type { AdminRole, CertificateStatus, CertificateTypeCode, Gender };
 /** SQLite stores booleans as 0/1. */
 export type DbBoolean = 0 | 1;
 
