@@ -1,0 +1,5 @@
+# Copy this file to `.dev.vars` (never commit `.dev.vars`).
+# Values here override `[vars]` from wrangler.toml during local development.
+
+# Public base URL used to build verification links (QR) and WhatsApp messages.
+APP_URL=http://localhost:5173

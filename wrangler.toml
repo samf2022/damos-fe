@@ -1,0 +1,19 @@
+#:schema node_modules/wrangler/config-schema.json
+name = "damos-fe"
+compatibility_date = "2026-10-25"
+compatibility_flags = ["nodejs_als"]
+pages_build_output_dir = ".svelte-kit/cloudflare"
+
+[vars]
+APP_URL = "http://localhost:5173"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "damos-fe-db"
+# TODO: replace with the real id from `wrangler d1 create damos-fe-db`
+database_id = "00000000-0000-0000-0000-000000000000"
+migrations_dir = "migrations"
+
+[[r2_buckets]]
+binding = "FILES"
+bucket_name = "damos-fe-files"
