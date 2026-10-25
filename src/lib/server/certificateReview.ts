@@ -61,7 +61,12 @@ export interface ReviewData {
 	/** Active signers, defaults of the type first. */
 	signers: ReviewSigner[];
 	/** Signers frozen at approval time. */
-	issuedSigners: { full_name: string; short_name: string; role_title: string }[];
+	issuedSigners: {
+		full_name: string;
+		short_name: string;
+		role_title: string;
+		phone: string | null;
+	}[];
 }
 
 export async function getReviewData(db: Db, certificateId: string): Promise<ReviewData | null> {
@@ -101,7 +106,7 @@ export async function getReviewData(db: Db, certificateId: string): Promise<Revi
 			certificate.certificate_type_id
 		),
 		db.all<ReviewData['issuedSigners'][number]>(
-			`SELECT full_name, short_name, role_title FROM certificate_signers
+			`SELECT full_name, short_name, role_title, phone FROM certificate_signers
 			  WHERE certificate_id = ? ORDER BY display_order`,
 			certificateId
 		)

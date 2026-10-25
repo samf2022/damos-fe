@@ -168,8 +168,32 @@ export const es = {
 			reviewedBy: 'Revisada por',
 			reviewedAt: 'Revisada el',
 			finalText: 'Texto emitido',
-			nextSteps:
-				'La generación del PDF, la impresión y el envío por WhatsApp llegan en el próximo paso.',
+			document: {
+				title: 'Documento',
+				generating: 'Generando el PDF…',
+				generate: 'Generar PDF',
+				missing: 'El PDF todavía no se ha generado.',
+				view: 'Ver o imprimir PDF',
+				regenerate: 'Volver a generar PDF',
+				regenerateHint:
+					'Úsalo si cambiaste el logo o los datos del encabezado. El texto de la constancia no cambia.',
+				whatsapp: 'Enviar por WhatsApp',
+				whatsappDesktopHint:
+					'En computadora se descarga el PDF y se abre el chat del solicitante: adjunta el archivo en WhatsApp.',
+				whatsappNoPhone:
+					'El solicitante no dejó teléfono: se descargará el PDF para enviarlo por otro medio.',
+				whatsappSentAt: 'Enviado por WhatsApp el',
+				message:
+					'Hola, {name}. El {council} le envía su {type} N.º {serial}. Puede verificar su autenticidad en: {url}',
+				errors: {
+					generate: 'No se pudo generar el PDF. Intenta de nuevo.',
+					not_found: 'La solicitud no existe.',
+					not_approved: 'Solo se generan PDF de constancias aprobadas.',
+					pdf_missing: 'No se recibió el PDF.',
+					pdf_too_large: 'El PDF pesa demasiado.',
+					pdf_invalid: 'El archivo generado no es un PDF válido.'
+				}
+			},
 			errors: {
 				not_found: 'La solicitud no existe.',
 				already_reviewed: 'Esta solicitud ya fue revisada por otra persona. Recarga la página.',

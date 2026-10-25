@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { resolve } from '$app/paths';
+	import CertificateDocument from '#lib/components/CertificateDocument.svelte';
 	import StatusBadge from '#lib/components/StatusBadge.svelte';
 	import {
 		MIN_SIGNERS,
@@ -269,7 +270,14 @@
 				{certificate.rendered_body}
 			</div>
 		</div>
-		<p class="text-sm text-slate-500">{t.nextSteps}</p>
+		{#if data.pdf}
+			<CertificateDocument
+				pdf={data.pdf}
+				pdfKey={certificate.pdf_r2_key}
+				phone={data.snapshot.phone}
+				whatsappSentAt={certificate.whatsapp_sent_at}
+			/>
+		{/if}
 	</section>
 {:else}
 	<section class="mt-8">
