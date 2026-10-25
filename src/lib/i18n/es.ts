@@ -1,5 +1,6 @@
 // User-facing copy (Spanish, Venezuela). Keep every visible string here.
 import type { CertificateStatus, CertificateTypeCode } from '#lib/types.ts';
+import type { RequestErrorCode } from '#lib/validation/certificateRequest.ts';
 
 export const es = {
 	app: {
@@ -37,9 +38,27 @@ export const es = {
 		},
 		knownSince: 'Tiempo viviendo en la comunidad',
 		knownSinceHint: 'Ejemplo: más de 20 años',
+		sections: {
+			type: '¿Qué constancia necesitas?',
+			personal: 'Datos personales',
+			address: 'Dirección y contacto'
+		},
+		optional: '(opcional)',
 		submit: 'Enviar solicitud',
-		notAvailable: 'El envío de solicitudes estará disponible muy pronto.',
-		noTypes: 'Por ahora no hay tipos de constancia disponibles.'
+		submitting: 'Enviando…',
+		noTypes: 'Por ahora no hay tipos de constancia disponibles.',
+		fixErrors: 'Revisa los campos marcados en rojo.',
+		duplicatePending:
+			'Ya tienes una solicitud pendiente de este tipo de constancia. Espera a que el consejo comunal la revise.',
+		typeUnavailable: 'Ese tipo de constancia ya no está disponible. Selecciona otro.',
+		errors: {
+			required: 'Este campo es obligatorio.',
+			too_long: 'El texto es demasiado largo.',
+			invalid_national_id: 'Escribe la cédula con su letra y números, por ejemplo V-12345678.',
+			invalid_name: 'Usa solo letras, espacios, apóstrofos o guiones.',
+			invalid_option: 'Selecciona una opción de la lista.',
+			invalid_phone: 'Escribe un teléfono venezolano válido, por ejemplo 0412-1234567.'
+		} satisfies Record<RequestErrorCode, string>
 	},
 	requestSent: {
 		title: '¡Solicitud enviada!',
