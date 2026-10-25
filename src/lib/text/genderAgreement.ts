@@ -1,4 +1,4 @@
-import type { Gender } from '#lib/types';
+import type { Gender } from '#lib/types.ts';
 
 /** Words whose form depends on the grammatical gender of the person they refer to. */
 const GENDERED_WORDS = {

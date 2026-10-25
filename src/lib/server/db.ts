@@ -1,6 +1,6 @@
 import { error } from '@sveltejs/kit';
 
-import type { AdminRole, CertificateStatus, CertificateTypeCode, Gender } from '#lib/types';
+import type { AdminRole, CertificateStatus, CertificateTypeCode, Gender } from '#lib/types.ts';
 
 export type { AdminRole, CertificateStatus, CertificateTypeCode, Gender };
 /** SQLite stores booleans as 0/1. */
