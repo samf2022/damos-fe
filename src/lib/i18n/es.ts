@@ -1,6 +1,6 @@
 // User-facing copy (Spanish, Venezuela). Keep every visible string here.
 import type { CertificateStatus, CertificateTypeCode } from '#lib/types.ts';
-import type { RequestErrorCode } from '#lib/validation/certificateRequest.ts';
+import type { FormErrorCode } from '#lib/validation/form.ts';
 
 export const es = {
 	app: {
@@ -50,15 +50,7 @@ export const es = {
 		fixErrors: 'Revisa los campos marcados en rojo.',
 		duplicatePending:
 			'Ya tienes una solicitud pendiente de este tipo de constancia. Espera a que el consejo comunal la revise.',
-		typeUnavailable: 'Ese tipo de constancia ya no está disponible. Selecciona otro.',
-		errors: {
-			required: 'Este campo es obligatorio.',
-			too_long: 'El texto es demasiado largo.',
-			invalid_national_id: 'Escribe la cédula con su letra y números, por ejemplo V-12345678.',
-			invalid_name: 'Usa solo letras, espacios, apóstrofos o guiones.',
-			invalid_option: 'Selecciona una opción de la lista.',
-			invalid_phone: 'Escribe un teléfono venezolano válido, por ejemplo 0412-1234567.'
-		} satisfies Record<RequestErrorCode, string>
+		typeUnavailable: 'Ese tipo de constancia ya no está disponible. Selecciona otro.'
 	},
 	requestSent: {
 		title: '¡Solicitud enviada!',
@@ -201,6 +193,16 @@ export const es = {
 		invalidCredentials: 'Usuario o contraseña incorrectos.',
 		missingFields: 'Ingresa tu usuario y contraseña.'
 	},
+	formErrors: {
+		required: 'Este campo es obligatorio.',
+		too_long: 'El texto es demasiado largo.',
+		invalid_national_id: 'Escribe la cédula con su letra y números, por ejemplo V-12345678.',
+		invalid_tax_id: 'Escribe el RIF con su letra y números, por ejemplo J-12345678-9.',
+		invalid_name: 'Usa solo letras, espacios, apóstrofos o guiones.',
+		invalid_option: 'Selecciona una opción de la lista.',
+		invalid_phone: 'Escribe un teléfono venezolano válido, por ejemplo 0412-1234567.',
+		invalid_number: 'Escribe un número válido.'
+	} satisfies Record<FormErrorCode, string>,
 	errors: {
 		notFound: 'Página no encontrada',
 		forbidden: 'No tienes permiso para ver esta página.',

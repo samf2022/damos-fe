@@ -14,7 +14,7 @@
 	const value = (field: RequestField) => form?.values?.[field] ?? '';
 	const errorOf = (field: RequestField) => {
 		const code = form?.errors?.[field];
-		return code ? t.errors[code] : undefined;
+		return code ? es.formErrors[code] : undefined;
 	};
 
 	const inputClass = (field: RequestField) =>

@@ -3,6 +3,7 @@
 import { isMaritalStatus, type MaritalStatus } from '#lib/text/genderAgreement.ts';
 import type { Gender } from '#lib/types.ts';
 import { formatVenezuelanPhone } from '#lib/whatsapp.ts';
+import { checkPresence, NAME_PATTERN, readValues, type FormErrors } from './form.ts';
 
 export const REQUEST_FIELDS = [
 	'certificate_type_id',
@@ -21,15 +22,7 @@ export const REQUEST_FIELDS = [
 export type RequestField = (typeof REQUEST_FIELDS)[number];
 export type RequestValues = Record<RequestField, string>;
 
-export type RequestErrorCode =
-	| 'required'
-	| 'too_long'
-	| 'invalid_national_id'
-	| 'invalid_name'
-	| 'invalid_option'
-	| 'invalid_phone';
-
-export type RequestErrors = Partial<Record<RequestField, RequestErrorCode>>;
+export type RequestErrors = FormErrors<RequestField>;
 
 export interface CertificateRequestInput {
 	certificateTypeId: string;
@@ -65,10 +58,7 @@ const MAX_LENGTH: Record<RequestField, number> = {
 	known_since_text: 60
 };
 
-const OPTIONAL_FIELDS: ReadonlySet<RequestField> = new Set(['occupation', 'house_number']);
-
-/** Letters (including accents and ñ), spaces, apostrophes, dots and hyphens. */
-const NAME_PATTERN = /^[\p{L}][\p{L}\s'.-]*$/u;
+const OPTIONAL_FIELDS: readonly RequestField[] = ['occupation', 'house_number'];
 
 /**
  * Normalizes a Venezuelan cédula to `V-12345678` / `E-12345678`.
@@ -82,25 +72,13 @@ export function normalizeNationalId(value: string): string | null {
 	return `${(match[1] ?? 'V').toUpperCase()}-${Number(digits)}`;
 }
 
-/** Collapses internal whitespace and trims. */
-function clean(value: FormDataEntryValue | null): string {
-	return typeof value === 'string' ? value.replace(/\s+/g, ' ').trim() : '';
-}
-
 export function readRequestValues(form: FormData): RequestValues {
-	return Object.fromEntries(
-		REQUEST_FIELDS.map((field) => [field, clean(form.get(field))])
-	) as RequestValues;
+	return readValues(form, REQUEST_FIELDS);
 }
 
 export function validateCertificateRequest(form: FormData): ValidationResult {
 	const values = readRequestValues(form);
-	const errors: RequestErrors = {};
-
-	for (const field of REQUEST_FIELDS) {
-		if (!values[field] && !OPTIONAL_FIELDS.has(field)) errors[field] = 'required';
-		else if (values[field].length > MAX_LENGTH[field]) errors[field] = 'too_long';
-	}
+	const errors = checkPresence(values, MAX_LENGTH, OPTIONAL_FIELDS);
 
 	const nationalId = normalizeNationalId(values.national_id);
 	if (!errors.national_id && !nationalId) errors.national_id = 'invalid_national_id';
