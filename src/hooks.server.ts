@@ -15,7 +15,8 @@ const LOGIN_PATH = '/admin/login';
 /** Admin sections restricted to specific roles. Everything else under /admin needs any session. */
 const ROLE_RULES: { prefix: string; roles: AdminRole[] }[] = [
 	{ prefix: '/admin/users', roles: ['admin'] },
-	{ prefix: '/admin/settings', roles: ['admin'] }
+	{ prefix: '/admin/settings', roles: ['admin'] },
+	{ prefix: '/admin/signers', roles: ['admin'] }
 ];
 
 const isUnder = (pathname: string, prefix: string) =>

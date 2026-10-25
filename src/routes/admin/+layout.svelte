@@ -12,7 +12,7 @@
 			{ href: resolve('/admin'), label: nav.dashboard },
 			{ href: resolve('/admin/certificates'), label: nav.certificates },
 			{ href: resolve('/admin/residents'), label: nav.residents },
-			{ href: resolve('/admin/signers'), label: nav.signers },
+			{ href: resolve('/admin/signers'), label: nav.signers, adminOnly: true },
 			{ href: resolve('/admin/certificate-types'), label: nav.certificateTypes },
 			{ href: resolve('/admin/settings'), label: nav.settings, adminOnly: true },
 			{ href: resolve('/admin/users'), label: nav.users, adminOnly: true }

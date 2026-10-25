@@ -104,6 +104,9 @@ export const es = {
 		},
 		dashboard: {
 			title: 'Resumen',
+			sampleData: 'Todavía hay datos de ejemplo. Cámbialos antes de emitir constancias reales:',
+			sampleCouncil: 'Datos del consejo',
+			sampleSigners: 'Firmantes de ejemplo',
 			pending: 'Pendientes por revisar',
 			approved: 'Aprobadas',
 			rejected: 'Rechazadas'
@@ -177,9 +180,83 @@ export const es = {
 			}
 		},
 		residents: { title: 'Residentes' },
-		signers: { title: 'Firmantes' },
+		signers: {
+			title: 'Firmantes',
+			description:
+				'Voceros y voceras que firman las constancias. Las constancias ya emitidas conservan los firmantes que tenían.',
+			add: 'Agregar firmante',
+			newTitle: 'Nuevo firmante',
+			editTitle: 'Editar firmante',
+			back: '← Volver a firmantes',
+			empty: 'Todavía no hay firmantes.',
+			inactive: 'Inactivo',
+			defaultFor: 'Firma por defecto',
+			none: 'Ningún tipo',
+			edit: 'Editar',
+			deactivate: 'Desactivar',
+			activate: 'Activar',
+			fields: {
+				fullName: 'Nombre completo',
+				fullNameHint: 'Como aparece en la cédula. Va debajo de la firma.',
+				shortName: 'Nombre corto',
+				shortNameHint: 'Ejemplo: Ana Rodríguez',
+				nationalId: 'Cédula',
+				roleTitle: 'Cargo',
+				roleTitleHint: 'Ejemplo: Voc. Finanzas',
+				phone: 'Teléfono',
+				gender: 'Sexo',
+				genderHint: 'Define si el texto dice «Nosotras» o «Nosotros».',
+				displayOrder: 'Orden en el documento',
+				displayOrderHint: 'Los números menores aparecen primero.',
+				certificateTypes: 'Firma por defecto en'
+			},
+			save: 'Guardar firmante',
+			saved: 'Firmante guardado.',
+			notFound: 'El firmante no existe.'
+		},
 		certificateTypes: { title: 'Tipos de constancia' },
-		settings: { title: 'Datos del consejo comunal' },
+		settings: {
+			title: 'Datos del consejo comunal',
+			description: 'Estos datos aparecen en el encabezado y en el texto de cada constancia.',
+			sections: { council: 'Consejo comunal', location: 'Ubicación', validity: 'Vigencia' },
+			fields: {
+				name: 'Nombre del consejo comunal',
+				taxId: 'RIF',
+				taxIdHint: 'Ejemplo: J-12345678-9',
+				state: 'Estado',
+				municipality: 'Municipio',
+				parish: 'Parroquia',
+				placeNameHint: 'Solo el nombre: el texto ya antepone «Estado», «Municipio» o «Parroquia».',
+				sectorAddress: 'Sector y dirección',
+				city: 'Ciudad o población',
+				cityHint: 'Donde se expide: «Constancia que se expide en …».',
+				validityMonths: 'Vigencia (meses)',
+				validityNote: 'Nota de vigencia',
+				validityNoteHint: 'Texto opcional al pie de la constancia.'
+			},
+			save: 'Guardar datos',
+			saved: 'Datos guardados.',
+			logo: {
+				title: 'Logo o membrete',
+				description:
+					'Se imprime en el encabezado de cada constancia. Usa una imagen JPG o PNG; si es muy grande, se reduce automáticamente antes de subirla.',
+				current: 'Logo actual',
+				none: 'Todavía no hay logo.',
+				choose: 'Imagen',
+				upload: 'Subir logo',
+				uploading: 'Subiendo…',
+				remove: 'Quitar logo',
+				uploaded: 'Logo actualizado.',
+				removed: 'Logo eliminado.',
+				resized: 'Imagen reducida de {from} a {to} antes de subirla.',
+				errors: {
+					logo_missing: 'Selecciona una imagen.',
+					logo_too_large: 'La imagen pesa más de 2 MB.',
+					logo_invalid_type: 'La imagen debe ser JPG o PNG.',
+					no_council: 'Guarda primero los datos del consejo.'
+				}
+			}
+		},
 		users: { title: 'Usuarios administradores' },
 		placeholder: 'Esta sección se construirá en el próximo hito.',
 		signedInAs: 'Sesión iniciada como',
@@ -192,6 +269,9 @@ export const es = {
 		submit: 'Entrar',
 		invalidCredentials: 'Usuario o contraseña incorrectos.',
 		missingFields: 'Ingresa tu usuario y contraseña.'
+	},
+	form: {
+		optional: '(opcional)'
 	},
 	formErrors: {
 		required: 'Este campo es obligatorio.',
