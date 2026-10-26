@@ -1,5 +1,5 @@
 // Starts a dev server for the e2e tests on a fresh, isolated local database:
-// migrations + seed, two fictitious admin users, then `vite dev` with E2E=1
+// migrations + seed, fictitious admin users (e2e/config.ts), then `vite dev` with E2E=1
 // (see vite.config.ts: separate persistence dir and e2e/e2e.env instead of .dev.vars).
 import { spawn, spawnSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
@@ -7,7 +7,7 @@ import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { hashPassword } from '../src/lib/server/password.ts';
-import { E2E_PASSWORD, E2E_PORT, E2E_STATE_DIR, E2E_USERS } from './config.ts';
+import { E2E_PASSWORD, E2E_PORT, E2E_ROLES, E2E_STATE_DIR, E2E_USERS } from './config.ts';
 
 const DATABASE_NAME = 'damos-fe-db';
 
@@ -21,9 +21,10 @@ wrangler('d1', 'migrations', 'apply', DATABASE_NAME, '--local', '--persist-to', 
 
 const sqlString = (value: string) => `'${value.replaceAll("'", "''")}'`;
 const rows = await Promise.all(
-	Object.values(E2E_USERS).map(async (username) => {
+	Object.entries(E2E_USERS).map(async ([key, username]) => {
 		const { hash, salt } = await hashPassword(E2E_PASSWORD);
-		return `(${[randomUUID(), username, username, hash, salt, 'admin'].map(sqlString).join(', ')})`;
+		const role = E2E_ROLES[key as keyof typeof E2E_USERS];
+		return `(${[randomUUID(), username, username, hash, salt, role].map(sqlString).join(', ')})`;
 	})
 );
 const dir = mkdtempSync(join(tmpdir(), 'damos-fe-e2e-'));

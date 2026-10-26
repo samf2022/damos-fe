@@ -1,6 +1,10 @@
 // User-facing copy (Spanish, Venezuela). Keep every visible string here.
 import type { CertificateStatus, CertificateTypeCode } from '#lib/types.ts';
 import type { FormErrorCode } from '#lib/validation/form.ts';
+import type {
+	TemplatePlaceholder,
+	TemplatePlaceholderGroup
+} from '#lib/certificates/templatePlaceholders.ts';
 
 export const es = {
 	app: {
@@ -248,7 +252,53 @@ export const es = {
 			saved: 'Firmante guardado.',
 			notFound: 'El firmante no existe.'
 		},
-		certificateTypes: { title: 'Tipos de constancia' },
+		certificateTypes: {
+			title: 'Tipos de constancia',
+			description:
+				'Título y redacción de cada constancia. Los cambios se aplican a las solicitudes que se aprueben desde ahora; las constancias ya emitidas no cambian.',
+			active: 'Disponible',
+			inactive: 'No disponible',
+			edit: 'Editar',
+			pendingCount: '{n} pendientes',
+			updatedAt: 'Modificada el',
+			back: 'Volver a tipos de constancia',
+			editTitle: 'Editar tipo de constancia',
+			fields: {
+				title: 'Título',
+				titleHint: 'Se imprime en mayúsculas sobre el texto.',
+				body: 'Redacción',
+				bodyHint:
+					'Texto corrido, en un solo párrafo. Lo que va entre llaves dobles, como {{resident.fullName}}, se reemplaza por los datos reales al aprobar.',
+				isActive: 'Disponible en el formulario público'
+			},
+			placeholders: 'Datos disponibles',
+			placeholdersHint: 'Pulsa un dato para insertarlo donde está el cursor.',
+			preview: 'Vista previa',
+			previewHint: 'Con un residente de ejemplo, los datos del consejo y los firmantes actuales.',
+			previewResident: 'Residente de ejemplo',
+			previewPdf: 'Ver PDF de ejemplo',
+			previewPdfError: 'No se pudo generar el PDF de ejemplo.',
+			sampleSigners:
+				'La vista previa usa firmantes ficticios porque hay menos de dos firmantes activos.',
+			noCouncil: 'Configura primero los datos del consejo comunal para ver la vista previa.',
+			emptyInPreview: 'Con los datos actuales quedarían vacíos:',
+			restore: 'Restaurar redacción original',
+			restoreConfirm:
+				'¿Reemplazar el título y la redacción por los originales? No se guarda hasta que pulses «Guardar cambios».',
+			pendingNotice:
+				'Hay {n} solicitudes pendientes de este tipo: se emitirán con la redacción que guardes.',
+			problems: {
+				unknown: 'Estos datos no existen; revisa cómo están escritos:',
+				missingRequired: 'Falta incluir:',
+				strayBraces:
+					'Hay llaves «{ }» sueltas. Cada dato va entre llaves dobles, por ejemplo {{resident.fullName}}.'
+			},
+			save: 'Guardar cambios',
+			saving: 'Guardando…',
+			saved: 'Cambios guardados.',
+			notFound: 'El tipo de constancia no existe.',
+			lastActive: 'Debe quedar al menos un tipo de constancia disponible en el formulario público.'
+		},
 		settings: {
 			title: 'Datos del consejo comunal',
 			description: 'Estos datos aparecen en el encabezado y en el texto de cada constancia.',
@@ -311,6 +361,44 @@ export const es = {
 	form: {
 		optional: '(opcional)'
 	},
+	templatePlaceholderGroups: {
+		signers: 'Firmantes',
+		resident: 'Residente',
+		council: 'Consejo comunal',
+		certificate: 'Constancia'
+	} satisfies Record<TemplatePlaceholderGroup, string>,
+	templatePlaceholders: {
+		'signers.pronoun': '«Nosotras» o «Nosotros», según los firmantes',
+		'signers.names': 'Nombres de los firmantes, en mayúsculas',
+		'signers.nationalIds': 'Cédulas de los firmantes: «16.842.708, 4.935.094 y 5.880.762»',
+		'signers.nationality': '«venezolanas» o «venezolanos»',
+		'signers.domiciled': '«domiciliadas» o «domiciliados»',
+		'signers.spokespersons': '«Voceras» o «Voceros»',
+		'resident.fullName': 'Nombre completo del residente, en mayúsculas (obligatorio)',
+		'resident.nationalId': 'Cédula con letra: «V-12345678»',
+		'resident.nationalIdNumber': 'Cédula con puntos: «12.345.678»',
+		'resident.nationality': '«venezolano», «venezolana», «extranjero» o «extranjera»',
+		'resident.maritalStatus': 'Estado civil: «soltera», «casado»…',
+		'resident.occupationPart': 'Ocupación con su coma («, costurera»); vacío si no la indicó',
+		'resident.address': 'Dirección: «calle Los Pinos, casa N° 14»',
+		'resident.domiciled': '«domiciliado» o «domiciliada»',
+		'resident.toCitizen': '«al ciudadano» o «a la ciudadana»',
+		'resident.aCitizen': '«un ciudadano» o «una ciudadana»',
+		'resident.ofThem': '«de él» o «de ella»',
+		'resident.article': '«el» o «la»',
+		'resident.citizen': '«ciudadano» o «ciudadana»',
+		'council.name': 'Nombre del consejo comunal',
+		'council.sectorAddress': 'Sector y dirección del consejo comunal',
+		'council.parish': 'Parroquia',
+		'council.municipality': 'Municipio',
+		'council.state': 'Estado',
+		'council.city': 'Ciudad donde se expide',
+		'certificate.knownSince': 'Tiempo en la comunidad: «más de 20 años»',
+		'certificate.issuedOn':
+			'Fecha en letras: «a los trece días del mes de julio de dos mil veintiséis»',
+		'certificate.issuedAtWords': 'Fecha en letras, sin «a los»',
+		'certificate.issuedDate': 'Fecha en números: «13-07-2026»'
+	} satisfies Record<TemplatePlaceholder, string>,
 	formErrors: {
 		required: 'Este campo es obligatorio.',
 		too_long: 'El texto es demasiado largo.',

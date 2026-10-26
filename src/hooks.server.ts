@@ -16,7 +16,8 @@ const LOGIN_PATH = '/admin/login';
 const ROLE_RULES: { prefix: string; roles: AdminRole[] }[] = [
 	{ prefix: '/admin/users', roles: ['admin'] },
 	{ prefix: '/admin/settings', roles: ['admin'] },
-	{ prefix: '/admin/signers', roles: ['admin'] }
+	{ prefix: '/admin/signers', roles: ['admin'] },
+	{ prefix: '/admin/certificate-types', roles: ['admin'] }
 ];
 
 const isUnder = (pathname: string, prefix: string) =>

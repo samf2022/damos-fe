@@ -9,5 +9,13 @@ export const E2E_USERS = {
 	/** Logs in normally. */
 	admin: 'e2e-admin',
 	/** Gets locked out by the brute-force test. */
-	locked: 'e2e-bloqueada'
+	locked: 'e2e-bloqueada',
+	/** Reviewer role: no access to admin-only sections. */
+	reviewer: 'e2e-revisor'
 } as const;
+
+export const E2E_ROLES: Record<keyof typeof E2E_USERS, 'admin' | 'reviewer'> = {
+	admin: 'admin',
+	locked: 'admin',
+	reviewer: 'reviewer'
+};

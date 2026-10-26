@@ -65,7 +65,7 @@ export interface CertificateTemplateContext extends TemplateContext {
 	};
 }
 
-const PLACEHOLDER = /\{\{\s*([a-zA-Z0-9_]+(?:\.[a-zA-Z0-9_]+)*)\s*\}\}/g;
+export const PLACEHOLDER_PATTERN = /\{\{\s*([a-zA-Z0-9_]+(?:\.[a-zA-Z0-9_]+)*)\s*\}\}/g;
 
 function lookup(context: TemplateContext, path: string): TemplateValue | TemplateContext {
 	let current: TemplateValue | TemplateContext = context;
@@ -80,7 +80,7 @@ function lookup(context: TemplateContext, path: string): TemplateValue | Templat
 
 /** Lists the distinct placeholder paths used in a template, in order of appearance. */
 export function extractPlaceholders(template: string): string[] {
-	return [...new Set([...template.matchAll(PLACEHOLDER)].map((match) => match[1]))];
+	return [...new Set([...template.matchAll(PLACEHOLDER_PATTERN)].map((match) => match[1]))];
 }
 
 /**
@@ -99,7 +99,7 @@ export function findMissingPlaceholders(template: string, context: TemplateConte
  * Unresolved placeholders are left untouched so they stay visible during review.
  */
 export function renderTemplate(template: string, context: TemplateContext): string {
-	return template.replace(PLACEHOLDER, (placeholder, path: string) => {
+	return template.replace(PLACEHOLDER_PATTERN, (placeholder, path: string) => {
 		const value = lookup(context, path);
 		return typeof value === 'string' || typeof value === 'number' ? String(value) : placeholder;
 	});

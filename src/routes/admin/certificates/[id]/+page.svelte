@@ -8,6 +8,7 @@
 		renderCertificateBody,
 		residentAddress
 	} from '#lib/certificates/renderCertificateBody.ts';
+	import { isTemplatePlaceholder } from '#lib/certificates/templatePlaceholders.ts';
 	import { es } from '#lib/i18n/es.ts';
 	import { formatDate } from '#lib/text/formatDate.ts';
 	import { isMaritalStatus } from '#lib/text/genderAgreement.ts';
@@ -122,7 +123,9 @@
 				{#if preview.missing.length > 0}
 					<p class="mt-3 rounded-md bg-amber-50 p-3 text-sm text-amber-900">
 						{t.missing}
-						{preview.missing.join(', ')}
+						{preview.missing
+							.map((path) => (isTemplatePlaceholder(path) ? es.templatePlaceholders[path] : path))
+							.join('; ')}
 					</p>
 				{/if}
 				<div
