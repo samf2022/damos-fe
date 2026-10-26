@@ -1,6 +1,7 @@
 import { fail, redirect } from '@sveltejs/kit';
-import { authenticate, createSession, setSessionCookie, writeAuditLog } from '#lib/server/auth.ts';
+import { createSession, setSessionCookie, writeAuditLog } from '#lib/server/auth.ts';
 import { getDb } from '#lib/server/bindings.ts';
+import { attemptLogin } from '#lib/server/loginThrottle.ts';
 import { es } from '#lib/i18n/es.ts';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -14,7 +15,7 @@ export const load: PageServerLoad = ({ locals, url }) => {
 };
 
 export const actions: Actions = {
-	default: async ({ request, cookies, url }) => {
+	default: async ({ request, cookies, url, getClientAddress }) => {
 		const form = await request.formData();
 		const username = String(form.get('username') ?? '').trim();
 		const password = String(form.get('password') ?? '');
@@ -23,11 +24,18 @@ export const actions: Actions = {
 		}
 
 		const db = getDb();
-		const user = await authenticate(db, username, password);
-		if (!user) {
-			// TODO: rate-limit failed attempts (e.g. per IP and username).
+		const attempt = await attemptLogin(db, { username, password, ip: getClientAddress() });
+		if (!attempt.ok) {
+			if (attempt.reason === 'locked') {
+				const minutes = String(Math.max(1, Math.ceil(attempt.retryAfterSeconds / 60)));
+				return fail(429, {
+					username,
+					message: es.login.tooManyAttempts.replace('{minutes}', minutes)
+				});
+			}
 			return fail(400, { username, message: es.login.invalidCredentials });
 		}
+		const { user } = attempt;
 
 		const session = await createSession(db, user.id);
 		setSessionCookie(cookies, session.token, session.expiresAt);

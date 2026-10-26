@@ -3,3 +3,9 @@
 
 # Public base URL used to build verification links (QR) and WhatsApp messages.
 APP_URL=http://localhost:5173
+
+# Cloudflare Turnstile (antispam in the public form). Leave both out to disable it locally.
+# These are Cloudflare's public testing keys: the widget always passes without a challenge.
+# In production the site key goes in wrangler.toml [vars] and the secret via `wrangler secret put`.
+# TURNSTILE_SITE_KEY=1x00000000000000000000AA
+# TURNSTILE_SECRET_KEY=1x0000000000000000000000000000000AA

@@ -50,7 +50,14 @@ export const es = {
 		fixErrors: 'Revisa los campos marcados en rojo.',
 		duplicatePending:
 			'Ya tienes una solicitud pendiente de este tipo de constancia. Espera a que el consejo comunal la revise.',
-		typeUnavailable: 'Ese tipo de constancia ya no está disponible. Selecciona otro.'
+		typeUnavailable: 'Ese tipo de constancia ya no está disponible. Selecciona otro.',
+		tooManyRequests:
+			'Recibimos demasiadas solicitudes desde tu conexión. Intenta de nuevo en una hora.',
+		captchaFailed:
+			'No pudimos comprobar que eres una persona. Espera a que aparezca la marca de verificación y vuelve a enviar.',
+		captchaLabel: 'Verificación de seguridad',
+		captchaUnavailable:
+			'No se pudo cargar la verificación de seguridad. Revisa tu conexión a internet y recarga la página.'
 	},
 	requestSent: {
 		title: '¡Solicitud enviada!',
@@ -107,6 +114,8 @@ export const es = {
 			sampleData: 'Todavía hay datos de ejemplo. Cámbialos antes de emitir constancias reales:',
 			sampleCouncil: 'Datos del consejo',
 			sampleSigners: 'Firmantes de ejemplo',
+			turnstileOff:
+				'La protección antispam (Cloudflare Turnstile) del formulario público no está activada. Solo se aplica el límite de solicitudes por conexión.',
 			pending: 'Pendientes por revisar',
 			approved: 'Aprobadas',
 			rejected: 'Rechazadas'
@@ -295,7 +304,9 @@ export const es = {
 		password: 'Contraseña',
 		submit: 'Entrar',
 		invalidCredentials: 'Usuario o contraseña incorrectos.',
-		missingFields: 'Ingresa tu usuario y contraseña.'
+		missingFields: 'Ingresa tu usuario y contraseña.',
+		tooManyAttempts:
+			'Demasiados intentos fallidos. Por seguridad, espera {minutes} minutos e inténtalo de nuevo.'
 	},
 	form: {
 		optional: '(opcional)'

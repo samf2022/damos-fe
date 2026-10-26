@@ -30,6 +30,11 @@
 		</ul>
 	</div>
 {/if}
+{#if !data.turnstileEnabled}
+	<p class="mt-4 rounded-md border border-amber-300 bg-amber-50 p-4 text-amber-900" role="status">
+		{t.turnstileOff}
+	</p>
+{/if}
 <div class="mt-6 grid gap-4 sm:grid-cols-3">
 	{#each [{ label: t.pending, value: data.counts.pending }, { label: t.approved, value: data.counts.approved }, { label: t.rejected, value: data.counts.rejected }] as stat (stat.label)}
 		<div class="rounded-lg border border-slate-200 bg-white p-4">

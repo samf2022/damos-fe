@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import PublicShell from '#lib/components/PublicShell.svelte';
+	import Turnstile from '#lib/components/Turnstile.svelte';
 	import { es } from '#lib/i18n/es.ts';
 	import { MARITAL_STATUSES } from '#lib/text/genderAgreement.ts';
 	import type { RequestField } from '#lib/validation/certificateRequest.ts';
@@ -10,6 +11,8 @@
 	const t = es.request;
 
 	let submitting = $state(false);
+	/** Bumped after each submit: Turnstile tokens are single-use. */
+	let attempts = $state(0);
 
 	const value = (field: RequestField) => form?.values?.[field] ?? '';
 	const errorOf = (field: RequestField) => {
@@ -81,6 +84,7 @@
 				return async ({ update }) => {
 					await update({ reset: false });
 					submitting = false;
+					attempts += 1;
 				};
 			}}
 		>
@@ -200,6 +204,15 @@
 					<input name="website" tabindex="-1" autocomplete="off" />
 				</label>
 			</div>
+
+			{#if data.turnstileSiteKey}
+				<Turnstile
+					siteKey={data.turnstileSiteKey}
+					label={t.captchaLabel}
+					unavailableMessage={t.captchaUnavailable}
+					resetKey={attempts}
+				/>
+			{/if}
 
 			<button
 				disabled={submitting}

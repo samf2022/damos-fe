@@ -1,7 +1,9 @@
 import { fail, redirect } from '@sveltejs/kit';
-import { getDb } from '#lib/server/bindings.ts';
+import { getDb, getTurnstileConfig } from '#lib/server/bindings.ts';
 import { submitCertificateRequest } from '#lib/server/certificateRequests.ts';
 import type { CertificateTypeRow } from '#lib/server/db.ts';
+import { guardPublicRequest } from '#lib/server/requestGuard.ts';
+import { TURNSTILE_RESPONSE_FIELD } from '#lib/server/turnstile.ts';
 import { es } from '#lib/i18n/es.ts';
 import {
 	readRequestValues,
@@ -17,13 +19,28 @@ export const load: PageServerLoad = async () => {
 	const certificateTypes = await getDb().all<Pick<CertificateTypeRow, 'id' | 'code' | 'title'>>(
 		'SELECT id, code, title FROM certificate_types WHERE is_active = 1 ORDER BY title'
 	);
-	return { certificateTypes };
+	return { certificateTypes, turnstileSiteKey: getTurnstileConfig()?.siteKey ?? null };
 };
 
 export const actions: Actions = {
-	default: async ({ request }) => {
+	default: async ({ request, getClientAddress }) => {
 		const form = await request.formData();
 		if (form.get(HONEYPOT_FIELD)) redirect(303, '/request/sent');
+
+		const db = getDb();
+		const guard = await guardPublicRequest(db, {
+			ip: getClientAddress(),
+			turnstileToken: form.get(TURNSTILE_RESPONSE_FIELD)?.toString() ?? null,
+			turnstile: getTurnstileConfig()
+		});
+		if (!guard.ok) {
+			const rateLimited = guard.reason === 'rate_limited';
+			return fail(rateLimited ? 429 : 400, {
+				values: readRequestValues(form),
+				errors: {} as RequestErrors,
+				message: rateLimited ? es.request.tooManyRequests : es.request.captchaFailed
+			});
+		}
 
 		const result = validateCertificateRequest(form);
 		if (!result.ok) {
@@ -34,7 +51,7 @@ export const actions: Actions = {
 			});
 		}
 
-		const submitted = await submitCertificateRequest(getDb(), result.data);
+		const submitted = await submitCertificateRequest(db, result.data);
 		if (!submitted.ok) {
 			const values = readRequestValues(form);
 			const duplicate = submitted.reason === 'duplicate_pending';
