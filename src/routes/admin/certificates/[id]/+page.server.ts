@@ -44,8 +44,7 @@ export const load: PageServerLoad = async ({ params }) => {
 							serialNumber: certificate.serial_number,
 							renderedBody: certificate.rendered_body ?? '',
 							residentName: toUpperName(`${snapshot.firstNames} ${snapshot.lastNames}`),
-							validityNote: council.validity_note || defaultValidityNote(council.validity_months),
-							verificationUrl
+							validityNote: council.validity_note || defaultValidityNote(council.validity_months)
 						},
 						signers: data.issuedSigners.map((signer) => ({
 							shortName: signer.short_name,

@@ -1,6 +1,6 @@
 // Certificate PDF, modeled on the council's paper certificates: A4, centered Times header,
 // logo, italic title and justified italic body (resident name upright), signature columns
-// and the validity note. A small QR links to the public verification page.
+// and the validity note.
 //
 // `buildCertificateDocument` is pure (also used by tests in Node). `generateCertificatePdf`
 // runs in the browser only: import it from event handlers, never from server code.
@@ -31,8 +31,6 @@ export interface CertificatePdfInput {
 		/** Uppercase resident name: printed upright inside the italic body, as on paper. */
 		residentName: string;
 		validityNote: string;
-		/** Public URL encoded in the QR code (`/verify/[code]`). */
-		verificationUrl: string;
 	};
 	signers: CertificatePdfSigner[];
 }
@@ -114,7 +112,7 @@ export function buildCertificateDocument(input: CertificatePdfInput): TDocumentD
 				lineHeight: 1.1
 			},
 			council.logoDataUrl
-				? { image: council.logoDataUrl, fit: [215, 80], alignment: 'center', margin: [0, 12, 0, 8] }
+				? { image: council.logoDataUrl, fit: [250, 95], alignment: 'center', margin: [0, 12, 0, 8] }
 				: { text: '', margin: [0, 12, 0, 0] },
 			{
 				text: certificate.title.toLocaleUpperCase('es-VE'),
@@ -126,7 +124,7 @@ export function buildCertificateDocument(input: CertificatePdfInput): TDocumentD
 				text: bodyRuns(certificate.renderedBody, certificate.residentName),
 				italics: true,
 				alignment: 'justify',
-				lineHeight: 1.45
+				lineHeight: 1.6
 			},
 			{
 				text: `Por el ${council.name}`,
@@ -136,25 +134,7 @@ export function buildCertificateDocument(input: CertificatePdfInput): TDocumentD
 				margin: [0, 10, 0, 48]
 			},
 			{ columns: signatureColumns, columnGap: 12 },
-			{ text: `Nota: ${certificate.validityNote}`, fontSize: 11, margin: [0, 28, 0, 0] },
-			{
-				margin: [0, 36, 0, 0],
-				columnGap: 10,
-				columns: [
-					{ qr: certificate.verificationUrl, fit: 64, width: 'auto' },
-					{
-						width: '*',
-						fontSize: 8,
-						color: '#555555',
-						margin: [0, 8, 0, 0],
-						stack: [
-							{ text: `Constancia N.º ${certificate.serialNumber}`, bold: true },
-							'Verifique su autenticidad escaneando el código o en:',
-							{ text: certificate.verificationUrl, color: '#1d4ed8' }
-						]
-					}
-				]
-			}
+			{ text: `Nota: ${certificate.validityNote}`, fontSize: 11, margin: [0, 28, 0, 0] }
 		]
 	};
 }

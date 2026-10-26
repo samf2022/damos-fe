@@ -26,8 +26,7 @@ const input: CertificatePdfInput = {
 		serialNumber: '2026-0001',
 		renderedBody: 'Nosotras, … a la ciudadana MARÍA PÉREZ, venezolana, … sector.',
 		residentName: 'MARÍA PÉREZ',
-		validityNote: defaultValidityNote(6),
-		verificationUrl: 'https://example.com/verify/ABCDEFGH23'
+		validityNote: defaultValidityNote(6)
 	},
 	signers: [
 		{ shortName: 'Ana Gómez', roleTitle: 'Voc. Finanzas', phone: '0294-3318046' },
@@ -47,7 +46,7 @@ describe('defaultValidityNote', () => {
 });
 
 describe('buildCertificateDocument', () => {
-	it('lays out header, upright resident name, signatures and QR', () => {
+	it('lays out header, upright resident name, signatures and note, without QR', () => {
 		const doc = buildCertificateDocument(input);
 		const json = JSON.stringify(doc.content);
 		expect(doc.pageSize).toBe('A4');
@@ -56,7 +55,7 @@ describe('buildCertificateDocument', () => {
 		expect(json).toContain('CONSTANCIA DE RESIDENCIA');
 		expect(json).toContain('{"text":"MARÍA PÉREZ","italics":false}');
 		expect(json).toContain('Tlf: 0294 - 3318046');
-		expect(json).toContain('"qr":"https://example.com/verify/ABCDEFGH23"');
+		expect(json).not.toContain('"qr"');
 		expect(json).toContain('Nota: La presente tendrá vigencia por seis (6) meses');
 	});
 
