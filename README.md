@@ -41,10 +41,15 @@ pnpm dev                                    # http://localhost:5173
 
 ```bash
 pnpm test     # pruebas unitarias (Vitest)
+pnpm test:e2e # pruebas end-to-end en el navegador (Playwright)
 pnpm check    # svelte-check + verificación de tipos de wrangler
 pnpm lint     # Prettier + ESLint
 pnpm format   # formatea el código
 ```
+
+**Pruebas unitarias** (`src/**/*.spec.ts`): usan un D1 en memoria con las migraciones reales (`src/lib/server/testing/memoryD1.ts`), helpers para crear datos ficticios (`testing/fixtures.ts`) y un Turnstile falso (`testing/fakeTurnstile.ts`). No necesitan red.
+
+**Pruebas end-to-end** (`e2e/`): `pnpm test:e2e` levanta su propio servidor en <http://localhost:5180> con una base local aparte (`.wrangler/e2e`, recreada en cada corrida) y las variables de `e2e/e2e.env` en lugar de `.dev.vars`, así que nunca tocan tus datos. Crean dos usuarios ficticios (`e2e/config.ts`). Usan las claves de prueba públicas de Turnstile, por lo que necesitan internet. La primera vez puede hacer falta instalar el navegador: `pnpm exec playwright install chromium --only-shell`.
 
 `worker-configuration.d.ts` (tipos de los bindings) se genera solo en `pnpm install`, `pnpm build` y `pnpm check`; no se sube a git. Para regenerarlo a mano: `pnpm gen`.
 
@@ -125,5 +130,8 @@ src/routes/                  páginas públicas, /admin y /api/files/[...key]
 - **Bindings:** en SvelteKit 3 + adapter-cloudflare ya no existe `event.platform`. Los bindings se leen con `import { env } from 'cloudflare:workers'` (encapsulado en `#lib/server/bindings.ts`) y están tipados por `wrangler types`.
 - **Imports:** el alias `#lib` (antes `$lib`) usa los `imports` de `package.json`, por lo que las rutas llevan la extensión: `#lib/server/db.ts`.
 - **Sesiones:** la cookie `damos_fe_session` es `httpOnly` y `sameSite=lax`, y `secure` en producción. En D1 solo se guarda el hash SHA-256 del token. Las sesiones duran 30 días y se renuevan con el uso.
+- **Fuerza bruta en el login:** 5 intentos fallidos por usuario o 20 por IP en 15 minutos bloquean el acceso hasta que pase la ventana, aunque la contraseña sea correcta. Los contadores viven en la tabla `rate_limits` de D1.
+- **Antispam del formulario público:** honeypot, máximo 10 solicitudes por hora por IP y Cloudflare Turnstile. Turnstile se activa cuando existen `TURNSTILE_SITE_KEY` (variable en `wrangler.toml`) y `TURNSTILE_SECRET_KEY` (secreto: `pnpm exec wrangler secret put TURNSTILE_SECRET_KEY`). Sin ellas solo aplican el honeypot y el límite, y el panel lo advierte.
+- **Limpieza:** las sesiones vencidas y los contadores viejos se borran en cada inicio de sesión exitoso, sin tareas programadas.
 - **Archivos R2:** las claves bajo `public/` (el logo) son públicas. Todo lo demás, como los PDFs, exige sesión de administrador.
 - **Verificación pública** (`/verify/[code]`): muestra solo nombre, tipo, estado y vigencia, nunca la cédula.

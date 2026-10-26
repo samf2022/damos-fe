@@ -36,3 +36,7 @@ worker-configuration.d.ts
 /*.jpeg
 /*.png
 *:Zone.Identifier
+
+# Playwright
+/test-results
+/playwright-report
