@@ -81,10 +81,12 @@ describe('renderCertificateBody with the real templates', () => {
 		);
 	});
 
-	it('conduct-only does not certify the address', () => {
+	it('conduct-only mentions the address, as the residence-and-conduct paper does', () => {
 		const { body, missing } = renderCertificateBody(input({ template: templates.conduct }));
 		expect(missing).toEqual([]);
-		expect(body).not.toContain('calle Los Pinos');
+		expect(body).toContain(
+			'Nº 12.345.678, domiciliada en calle Los Pinos, casa N° 05 de nuestro sector, y por el conocimiento'
+		);
 		expect(body).toContain('que de ella tenemos damos fe que es una ciudadana de BUENA CONDUCTA');
 	});
 
@@ -103,6 +105,18 @@ describe('renderCertificateBody with the real templates', () => {
 		);
 		expect(context.resident.nationality).toBe('extranjera');
 		expect(context.resident.nationalIdNumber).toBe('E-81.234.567');
+	});
+
+	it('completes a bare number of years', () => {
+		expect(buildCertificateContext(input({ knownSinceText: ' 20 ' })).certificate.knownSince).toBe(
+			'20 años'
+		);
+		expect(buildCertificateContext(input({ knownSinceText: '1' })).certificate.knownSince).toBe(
+			'1 año'
+		);
+		expect(
+			buildCertificateContext(input({ knownSinceText: 'varios años' })).certificate.knownSince
+		).toBe('varios años');
 	});
 
 	it('reports blank required values', () => {

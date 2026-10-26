@@ -61,13 +61,19 @@ export function defaultValidityNote(months: number): string {
 /** "0294-3318046" → "0294 - 3318046", as written on the paper certificates. */
 const spacedPhone = (phone: string) => phone.replace('-', ' - ');
 
-/** Splits the body so the resident's name is upright inside the italic paragraph. */
+/**
+ * Splits the body so the resident's name is upright inside the italic paragraph. Punctuation
+ * right after the name stays in the upright run: separate runs would let justification open a
+ * gap before it ("NAME , venezolano").
+ */
 function bodyRuns(body: string, residentName: string): Content[] {
 	if (!residentName || !body.includes(residentName)) return [{ text: body }];
+	const escaped = residentName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 	return body
-		.split(residentName)
-		.flatMap((part, index) =>
-			index === 0 ? [{ text: part }] : [{ text: residentName, italics: false }, { text: part }]
+		.split(new RegExp(`(${escaped}[,.;:]?)`))
+		.filter((part) => part !== '')
+		.map((part) =>
+			part.startsWith(residentName) ? { text: part, italics: false } : { text: part }
 		);
 }
 
@@ -82,7 +88,8 @@ export function buildCertificateDocument(input: CertificatePdfInput): TDocumentD
 	const signatureColumns: Content[] = input.signers.map((signer) => ({
 		width: '*',
 		alignment: 'center',
-		fontSize: 10.5,
+		fontSize: 12,
+		lineHeight: 1.25,
 		stack: [
 			{
 				canvas: [{ type: 'line', x1: 0, y1: 0, x2: 130, y2: 0, lineWidth: 0.7 }],
@@ -96,7 +103,7 @@ export function buildCertificateDocument(input: CertificatePdfInput): TDocumentD
 
 	return {
 		pageSize: 'A4',
-		pageMargins: [80, 50, 80, 50],
+		pageMargins: [85, 50, 85, 50],
 		info: {
 			title: `${certificate.title} N.º ${certificate.serialNumber}`,
 			author: council.name,
@@ -124,7 +131,7 @@ export function buildCertificateDocument(input: CertificatePdfInput): TDocumentD
 				text: bodyRuns(certificate.renderedBody, certificate.residentName),
 				italics: true,
 				alignment: 'justify',
-				lineHeight: 1.6
+				lineHeight: 1.85
 			},
 			{
 				text: `Por el ${council.name}`,

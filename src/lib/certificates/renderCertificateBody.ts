@@ -57,6 +57,13 @@ export function residentAddress(resident: Pick<ResidentSnapshot, 'streetAddress'
 		: resident.streetAddress;
 }
 
+/** "20" → "20 años": the field asks for a period, but a bare number is a common answer. */
+export function normalizeKnownSince(text: string): string {
+	const trimmed = text.trim();
+	if (!/^\d+$/.test(trimmed)) return trimmed;
+	return `${Number(trimmed)} ${Number(trimmed) === 1 ? 'año' : 'años'}`;
+}
+
 function numericDate(iso: string): string {
 	const parts = new Intl.DateTimeFormat('es-VE', {
 		timeZone: VENEZUELA_TIME_ZONE,
@@ -102,7 +109,7 @@ export function buildCertificateContext(input: CertificateBodyInput): Certificat
 			domiciled: agree('domiciled', gender)
 		},
 		certificate: {
-			knownSince: input.knownSinceText,
+			knownSince: normalizeKnownSince(input.knownSinceText),
 			issuedAtWords: dateToSpanishWords(input.issuedAt),
 			issuedOn: dateToSpanishPhrase(input.issuedAt),
 			issuedDate: numericDate(input.issuedAt)

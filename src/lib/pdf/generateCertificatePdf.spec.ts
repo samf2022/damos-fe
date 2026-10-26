@@ -53,7 +53,7 @@ describe('buildCertificateDocument', () => {
 		expect(json).toContain('Municipio Bermúdez – Parroquia Santa Catalina del Estado Sucre');
 		expect(json).toContain('Consejo Comunal “Los Pinos”   RIF. J-12345678-9');
 		expect(json).toContain('CONSTANCIA DE RESIDENCIA');
-		expect(json).toContain('{"text":"MARÍA PÉREZ","italics":false}');
+		expect(json).toContain('{"text":"MARÍA PÉREZ,","italics":false}');
 		expect(json).toContain('Tlf: 0294 - 3318046');
 		expect(json).not.toContain('"qr"');
 		expect(json).toContain('Nota: La presente tendrá vigencia por seis (6) meses');
