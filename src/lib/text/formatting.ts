@@ -19,3 +19,25 @@ export function formatNationalIdNumber(nationalId: string): string {
 export function toUpperName(name: string): string {
 	return name.toLocaleUpperCase('es-VE');
 }
+
+const LOWERCASE_CONNECTORS = new Set(['de', 'del', 'y']);
+
+/**
+ * Street address as written in certificates: lowercase first letter ("calle La Paz"). Text typed
+ * in capitals is title-cased first ("CALLE EL PORVENIR" → "calle El Porvenir"); abbreviations
+ * with periods ("C.A.") are kept; "AV." becomes "av.".
+ */
+export function toAddressCase(address: string): string {
+	const text = address.trim();
+	const allCaps = text === text.toLocaleUpperCase('es-VE') && /\p{L}/u.test(text);
+	const cased = allCaps
+		? text.replace(/[^\s,]+/g, (word) => {
+				if (/\.\S/.test(word)) return word;
+				const lower = word.toLocaleLowerCase('es-VE');
+				return LOWERCASE_CONNECTORS.has(lower)
+					? lower
+					: lower.charAt(0).toLocaleUpperCase('es-VE') + lower.slice(1);
+			})
+		: text;
+	return cased.charAt(0).toLocaleLowerCase('es-VE') + cased.slice(1);
+}

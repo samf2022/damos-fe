@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { signersGroupWords } from './genderAgreement';
-import { formatNationalIdNumber, joinSpanishList, toUpperName } from './formatting';
+import { formatNationalIdNumber, joinSpanishList, toAddressCase, toUpperName } from './formatting';
 
 describe('joinSpanishList', () => {
 	it('joins with commas and "y"', () => {
@@ -38,5 +38,22 @@ describe('signersGroupWords', () => {
 			spokespersons: 'Voceras'
 		});
 		expect(signersGroupWords(['F', 'M']).spokespersons).toBe('Voceros');
+	});
+});
+
+describe('toAddressCase', () => {
+	it('lowercases the first letter and keeps the rest as typed', () => {
+		expect(toAddressCase('Calle La Paz')).toBe('calle La Paz');
+		expect(toAddressCase(' Carretera Vía Nacional Carúpano – San José ')).toBe(
+			'carretera Vía Nacional Carúpano – San José'
+		);
+	});
+
+	it('title-cases text typed in capitals', () => {
+		expect(toAddressCase('CALLE EL PORVENIR')).toBe('calle El Porvenir');
+		expect(toAddressCase('AV. PRINCIPAL DE LA ÑAMERA, SECTOR 5 Y 6')).toBe(
+			'av. Principal de La Ñamera, Sector 5 y 6'
+		);
+		expect(toAddressCase('SECTOR AUTORICA C.A.')).toBe('sector Autorica C.A.');
 	});
 });

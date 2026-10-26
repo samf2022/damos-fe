@@ -5,7 +5,12 @@ import {
 	dateToSpanishWords,
 	VENEZUELA_TIME_ZONE
 } from '#lib/text/dateToSpanishWords.ts';
-import { formatNationalIdNumber, joinSpanishList, toUpperName } from '#lib/text/formatting.ts';
+import {
+	formatNationalIdNumber,
+	joinSpanishList,
+	toAddressCase,
+	toUpperName
+} from '#lib/text/formatting.ts';
 import {
 	agree,
 	isMaritalStatus,
@@ -99,7 +104,10 @@ export function buildCertificateContext(input: CertificateBodyInput): Certificat
 				? maritalStatusWord(resident.maritalStatus, gender)
 				: '',
 			occupationPart: occupation ? `, ${occupation}` : '',
-			address: residentAddress(resident),
+			address: residentAddress({
+				...resident,
+				streetAddress: toAddressCase(resident.streetAddress)
+			}),
 			article: agree('article', gender),
 			citizen: agree('citizen', gender),
 			toCitizen: agree('toCitizen', gender),
