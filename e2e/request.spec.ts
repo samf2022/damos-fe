@@ -18,3 +18,27 @@ test('without a Turnstile token the request is refused and nothing is saved', as
 	await expect(page).toHaveURL(/\/request$/);
 	await expect(page.getByLabel(es.request.resident.nationalId)).toHaveValue('V-90000002');
 });
+
+test('a type chosen on the home page is preselected and missing data is listed', async ({
+	page
+}) => {
+	await open(page, '/');
+	// Each type card links to the form with that type chosen.
+	await page.locator('a[href*="tipo="]').first().click();
+	await expect(page).toHaveURL(/\/request\?tipo=/);
+	await expect(page.locator('input[name="cf-turnstile-response"]')).toHaveValue(/.+/, {
+		timeout: 20_000
+	});
+	await expect(page.getByRole('radio', { checked: true })).toHaveCount(1);
+
+	await page.getByRole('button', { name: es.request.submit }).click();
+	const summary = page.getByRole('alert').filter({ hasText: es.request.errorSummary });
+	await expect(summary).toBeFocused();
+	const nationalId = es.request.summaryRequired.replace('{field}', es.request.resident.nationalId);
+	await page.getByRole('link', { name: nationalId }).click();
+	await expect(page.getByLabel(es.request.resident.nationalId)).toBeFocused();
+	// The type stays chosen, so it is not in the list.
+	await expect(
+		page.getByRole('link', { name: es.request.summaryChoose.replace('{field}', es.request.type) })
+	).toHaveCount(0);
+});

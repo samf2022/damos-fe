@@ -15,11 +15,17 @@ import type { Actions, PageServerLoad } from './$types';
 /** Hidden field real users never fill in; bots that fill every input get a fake success. */
 const HONEYPOT_FIELD = 'website';
 
-export const load: PageServerLoad = async () => {
+export const load: PageServerLoad = async ({ url }) => {
 	const certificateTypes = await getDb().all<Pick<CertificateTypeRow, 'id' | 'code' | 'title'>>(
 		'SELECT id, code, title FROM certificate_types WHERE is_active = 1 ORDER BY title'
 	);
-	return { certificateTypes, turnstileSiteKey: getTurnstileConfig()?.siteKey ?? null };
+	// `?tipo=residence` comes from the type cards on the home page.
+	const tipo = url.searchParams.get('tipo');
+	return {
+		certificateTypes,
+		preselectedTypeId: certificateTypes.find((type) => type.code === tipo)?.id ?? null,
+		turnstileSiteKey: getTurnstileConfig()?.siteKey ?? null
+	};
 };
 
 export const actions: Actions = {

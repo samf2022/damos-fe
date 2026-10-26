@@ -16,17 +16,64 @@ export const es = {
 		request: 'Solicitar constancia',
 		admin: 'Administración'
 	},
-	home: {
-		title: 'Solicita tu constancia',
-		description:
-			'Pide en línea tu constancia de residencia, de residencia y buena conducta o de buena conducta. El consejo comunal revisará tu solicitud y te avisará cuando esté lista.',
-		cta: 'Comenzar solicitud'
+	public: {
+		skipToContent: 'Saltar al contenido',
+		metaDescription:
+			'Solicita en línea tu constancia de residencia o de buena conducta del consejo comunal y recíbela por WhatsApp.',
+		privacy: 'Tus datos solo los usa el consejo comunal para emitir tu constancia.',
+		taxId: 'RIF'
 	},
+	home: {
+		title: 'Solicita tu constancia en línea',
+		description:
+			'Sin filas ni papeles: llena el formulario desde tu teléfono y el consejo comunal te avisará por WhatsApp cuando tu constancia esté lista.',
+		cta: 'Comenzar solicitud',
+		ctaHint: 'Toma unos 3 minutos.',
+		stepsTitle: 'Cómo funciona',
+		steps: [
+			{
+				title: 'Llena el formulario',
+				text: 'Con los datos de tu cédula, tu dirección y un teléfono con WhatsApp.'
+			},
+			{
+				title: 'El consejo comunal revisa',
+				text: 'Los voceros verifican tus datos y aprueban la constancia.'
+			},
+			{
+				title: 'Recíbela por WhatsApp',
+				text: 'Te enviamos la constancia en PDF, lista para imprimir.'
+			}
+		],
+		needTitle: 'Ten a mano',
+		needs: [
+			'Tu cédula de identidad.',
+			'Tu dirección: calle o avenida y número de casa.',
+			'Un teléfono con WhatsApp.',
+			'Cuánto tiempo llevas viviendo en la comunidad.'
+		],
+		typesTitle: 'Constancias disponibles',
+		validity: 'Cada constancia tiene vigencia de {months} meses desde que se emite.',
+		requestThis: 'Solicitar'
+	},
+	certificateTypeDescriptions: {
+		residence: 'Certifica que vives en la comunidad. Se pide en trámites, inscripciones y bancos.',
+		residence_conduct: 'Certifica tu residencia y tu buena conducta en un solo documento.',
+		conduct: 'Certifica tu buena conducta en la comunidad.'
+	} satisfies Record<CertificateTypeCode, string>,
 	request: {
 		title: 'Solicitud de constancia',
 		description: 'Completa tus datos tal como aparecen en tu cédula de identidad.',
+		meta: 'Toma unos 3 minutos. Todos los campos son obligatorios, salvo los marcados como opcionales.',
+		errorSummary: 'Corrige estos datos para continuar:',
+		summaryRequired: 'Completa «{field}».',
+		summaryChoose: 'Elige una opción en «{field}».',
+		nationalIdFormat: 'Con la letra V o E. Si eres venezolano, basta con los números.',
+		phoneFormat: 'Te escribiremos a este número cuando tu constancia esté lista.',
+		knownSinceFormat: 'Por ejemplo: «más de 20 años» o «desde 2015».',
+		houseNumberFormat: 'Por ejemplo: «48» o «Quinta Los Mangos».',
 		certificateType: 'Tipo de constancia',
 		selectType: 'Selecciona un tipo',
+		choose: 'Selecciona una opción',
 		resident: {
 			nationalId: 'Cédula de identidad',
 			nationalIdHint: 'Ejemplo: V-12345678',
@@ -65,8 +112,14 @@ export const es = {
 	},
 	requestSent: {
 		title: '¡Solicitud enviada!',
-		description:
-			'Recibimos tu solicitud. El consejo comunal la revisará y te contactará por WhatsApp cuando tu constancia esté lista.',
+		description: 'Recibimos tu solicitud. No necesitas hacer nada más por ahora.',
+		nextTitle: '¿Qué sigue?',
+		next: [
+			'El consejo comunal revisará tus datos.',
+			'Si falta algo, te contactaremos por WhatsApp.',
+			'Cuando esté aprobada, te enviaremos la constancia en PDF por WhatsApp.'
+		],
+		another: 'Solicitar otra constancia',
 		back: 'Volver al inicio'
 	},
 	verify: {
@@ -78,8 +131,13 @@ export const es = {
 		issuedAt: 'Emitida el',
 		expiresAt: 'Vigente hasta',
 		valid: 'Constancia válida y vigente',
+		validHint: 'Fue emitida por el consejo comunal y sigue vigente.',
 		expired: 'Constancia vencida',
-		notIssued: 'Esta constancia no ha sido emitida'
+		expiredHint: 'Fue emitida por el consejo comunal, pero ya no está vigente.',
+		notIssued: 'Esta constancia no ha sido emitida',
+		notIssuedHint: 'La solicitud existe, pero el consejo comunal no la ha aprobado.',
+		issuedBy: 'Emitida por',
+		privacy: 'Por privacidad, aquí no se muestra la cédula ni otros datos del titular.'
 	},
 	gender: {
 		F: 'Femenino',
