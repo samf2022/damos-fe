@@ -14,6 +14,8 @@ enabled = true
 
 [vars]
 APP_URL = "https://damos-fe.samf0794.workers.dev"
+# Public Turnstile site key; the secret is set with `wrangler secret put TURNSTILE_SECRET_KEY`.
+TURNSTILE_SITE_KEY = "0x4AAAAAAFmGH__9S0aYJSPU"
 
 [[d1_databases]]
 binding = "DB"
