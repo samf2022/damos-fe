@@ -114,12 +114,12 @@ export function buildCertificateDocument(input: CertificatePdfInput): TDocumentD
 			{
 				stack: headerLines,
 				font: 'Times',
-				fontSize: 13,
+				fontSize: 14,
 				alignment: 'center',
-				lineHeight: 1.1
+				lineHeight: 1.2
 			},
 			council.logoDataUrl
-				? { image: council.logoDataUrl, fit: [250, 95], alignment: 'center', margin: [0, 12, 0, 8] }
+				? { image: council.logoDataUrl, fit: [290, 72], alignment: 'center', margin: [0, 12, 0, 8] }
 				: { text: '', margin: [0, 12, 0, 0] },
 			{
 				text: certificate.title.toLocaleUpperCase('es-VE'),
