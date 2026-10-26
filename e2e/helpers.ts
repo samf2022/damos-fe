@@ -15,23 +15,30 @@ export async function login(page: Page, username: string, password: string) {
 	await page.getByRole('button', { name: es.login.submit }).click();
 }
 
-/** Fictitious applicant; the national id varies so tests never collide on "duplicate pending". */
+/** Goes through every step of the public form with a fictitious applicant, up to the review. */
 export async function fillRequestForm(
 	page: Page,
 	nationalIdNumber: string,
 	options: { type?: string; lastNames?: string; streetAddress?: string } = {}
 ) {
-	const t = es.request;
+	const w = es.request.wizard;
+	const next = () => page.getByRole('button', { name: w.next }).click();
 	if (options.type) await page.getByRole('radio', { name: options.type }).check();
 	else await page.getByRole('radio').first().check();
-	await page.getByLabel(t.resident.nationalId).fill(`V-${nationalIdNumber}`);
-	await page.getByLabel(t.resident.gender).selectOption('F');
-	await page.getByLabel(t.resident.firstNames).fill('Prueba');
-	await page.getByLabel(t.resident.lastNames).fill(options.lastNames ?? 'Automatizada');
-	await page.getByLabel(t.resident.maritalStatus).selectOption('single');
-	await page.getByLabel(t.resident.streetAddress).fill(options.streetAddress ?? 'Calle de Pruebas');
-	await page.getByLabel(t.resident.phone).fill('0412-0000000');
-	await page.getByLabel(t.knownSince).fill('10');
+	await next();
+	await page.getByLabel(w.fields.nationalId).fill(`V-${nationalIdNumber}`);
+	await page.getByLabel(w.fields.firstNames).fill('Prueba');
+	await page.getByLabel(w.fields.lastNames).fill(options.lastNames ?? 'Automatizada');
+	await next();
+	await page.getByRole('radio', { name: w.fields.genderOptions.F }).check();
+	await page.getByRole('radio', { name: 'Soltera' }).check();
+	await next();
+	await page.getByLabel(w.fields.streetAddress).fill(options.streetAddress ?? 'Calle de Pruebas');
+	await page.getByLabel(w.fields.knownSince).fill('10');
+	await next();
+	await page.getByLabel(w.fields.phone).fill('0412-0000000');
+	await next();
+	await expect(page.getByRole('heading', { name: w.steps.review.title })).toBeVisible();
 }
 
 export async function expectAlert(page: Page, text: string) {
@@ -44,13 +51,12 @@ export async function submitRequest(
 	nationalIdNumber: string,
 	options: Parameters<typeof fillRequestForm>[2] = {}
 ) {
-	// The widget keeps the network busy, so wait for its token instead of "networkidle":
-	// it is rendered on mount, so a token also means the page is hydrated.
-	await page.goto('/request');
+	await open(page, '/request');
+	await fillRequestForm(page, nationalIdNumber, options);
+	// The widget is only on the review step; wait for its token before sending.
 	await expect(page.locator('input[name="cf-turnstile-response"]')).toHaveValue(/.+/, {
 		timeout: 20_000
 	});
-	await fillRequestForm(page, nationalIdNumber, options);
 	await page.getByRole('button', { name: es.request.submit }).click();
 	await expect(page).toHaveURL(/\/request\/sent$/);
 }

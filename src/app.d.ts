@@ -14,7 +14,11 @@ declare global {
 
 		// interface Error {}
 		// interface PageData {}
-		// interface PageState {}
+		/** Shallow routing state: the public request form's current step (see `/request`). */
+		interface PageState {
+			step?: number;
+			fromReview?: boolean;
+		}
 	}
 }
 

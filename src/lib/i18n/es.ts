@@ -62,18 +62,7 @@ export const es = {
 	} satisfies Record<CertificateTypeCode, string>,
 	request: {
 		title: 'Solicitud de constancia',
-		description: 'Completa tus datos tal como aparecen en tu cédula de identidad.',
-		meta: 'Toma unos 3 minutos. Todos los campos son obligatorios, salvo los marcados como opcionales.',
-		errorSummary: 'Corrige estos datos para continuar:',
-		summaryRequired: 'Completa «{field}».',
-		summaryChoose: 'Elige una opción en «{field}».',
-		nationalIdFormat: 'Con la letra V o E. Si eres venezolano, basta con los números.',
-		phoneFormat: 'Te escribiremos a este número cuando tu constancia esté lista.',
-		knownSinceFormat: 'Por ejemplo: «más de 20 años» o «desde 2015».',
-		houseNumberFormat: 'Por ejemplo: «48» o «Quinta Los Mangos».',
 		certificateType: 'Tipo de constancia',
-		selectType: 'Selecciona un tipo',
-		choose: 'Selecciona una opción',
 		resident: {
 			nationalId: 'Cédula de identidad',
 			nationalIdHint: 'Ejemplo: V-12345678',
@@ -88,12 +77,6 @@ export const es = {
 			phoneHint: 'Ejemplo: 0412-1234567'
 		},
 		knownSince: 'Tiempo viviendo en la comunidad',
-		knownSinceHint: 'Ejemplo: más de 20 años',
-		sections: {
-			type: '¿Qué constancia necesitas?',
-			personal: 'Datos personales',
-			address: 'Dirección y contacto'
-		},
 		optional: '(opcional)',
 		submit: 'Enviar solicitud',
 		submitting: 'Enviando…',
@@ -108,7 +91,73 @@ export const es = {
 			'No pudimos comprobar que eres una persona. Espera a que aparezca la marca de verificación y vuelve a enviar.',
 		captchaLabel: 'Verificación de seguridad',
 		captchaUnavailable:
-			'No se pudo cargar la verificación de seguridad. Revisa tu conexión a internet y recarga la página.'
+			'No se pudo cargar la verificación de seguridad. Revisa tu conexión a internet y recarga la página.',
+		// Step-by-step form: one short topic per screen, plain questions and examples.
+		wizard: {
+			stepOf: 'Paso {n} de {total}',
+			next: 'Continuar',
+			back: 'Volver',
+			backToReview: 'Guardar y volver a revisar',
+			change: 'Cambiar',
+			changeLabel: 'Cambiar {field}',
+			stepErrors: 'Revisa lo que está marcado en rojo.',
+			help: '¿Necesitas ayuda? Pide a alguien de confianza que te acompañe, o acércate al consejo comunal.',
+			steps: {
+				type: { title: '¿Qué constancia necesitas?', intro: 'Toca la que necesitas.' },
+				identity: {
+					title: '¿Quién eres?',
+					intro: 'Escribe tus datos igual que en tu cédula de identidad.'
+				},
+				about: {
+					title: 'Cuéntanos sobre ti',
+					intro: 'Lo usamos para escribir bien tu constancia.'
+				},
+				home: { title: '¿Dónde vives?', intro: 'Tu dirección dentro de la comunidad.' },
+				contact: {
+					title: '¿A qué número te escribimos?',
+					intro: 'Te avisaremos por WhatsApp cuando tu constancia esté lista.'
+				},
+				review: {
+					title: 'Revisa tus datos',
+					intro: 'Si algo está mal, toca «Cambiar». Si todo está bien, toca «Enviar solicitud».'
+				}
+			},
+			fields: {
+				nationalId: 'Número de cédula',
+				nationalIdHint: 'Si eres venezolano, escribe solo los números. Ejemplo: 12345678',
+				nationalIdForeign: '¿Eres extranjero? Escribe una E antes. Ejemplo: E-81234567',
+				firstNames: 'Nombres',
+				firstNamesHint: 'Ejemplo: María José',
+				lastNames: 'Apellidos',
+				lastNamesHint: 'Ejemplo: Pérez Rodríguez',
+				gender: '¿Eres mujer u hombre?',
+				genderOptions: { F: 'Mujer', M: 'Hombre' },
+				maritalStatus: '¿Cuál es tu estado civil?',
+				occupation: '¿A qué te dedicas?',
+				occupationHint: 'Ejemplo: comerciante, estudiante, ama de casa. Puedes dejarlo en blanco.',
+				streetAddress: 'Calle, avenida o vereda',
+				streetAddressHint: 'Ejemplo: Calle Bolívar',
+				houseNumber: 'Número o nombre de la casa',
+				houseNumberHint: 'Ejemplo: 48, o Quinta Los Mangos. Puedes dejarlo en blanco.',
+				knownSince: '¿Cuántos años tienes viviendo en la comunidad?',
+				knownSinceHint: 'Escribe el número de años. Ejemplo: 5',
+				phone: 'Teléfono con WhatsApp',
+				phoneHint: 'Ejemplo: 0412-1234567'
+			},
+			/** Replaces "Este campo es obligatorio" with what to do, field by field. */
+			required: {
+				certificate_type_id: 'Toca la constancia que necesitas.',
+				national_id: 'Escribe el número de tu cédula.',
+				first_names: 'Escribe tus nombres.',
+				last_names: 'Escribe tus apellidos.',
+				gender: 'Toca «Mujer» u «Hombre».',
+				marital_status: 'Toca tu estado civil.',
+				street_address: 'Escribe la calle donde vives.',
+				known_since_text: 'Escribe cuántos años tienes viviendo aquí.',
+				phone: 'Escribe tu número de teléfono.'
+			},
+			notGiven: 'No indicado'
+		}
 	},
 	requestSent: {
 		title: '¡Solicitud enviada!',

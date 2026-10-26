@@ -1,128 +1,205 @@
 <script lang="ts">
+	// Step-by-step request form: one short topic per screen, big tap targets, a review screen
+	// before sending. Every input stays in the one <form> (other steps are just hidden), so the
+	// server action receives the same fields as before. Steps live in shallow routing state, so
+	// the phone's back button goes to the previous step instead of leaving the page.
 	import { enhance } from '$app/forms';
+	import { pushState } from '$app/navigation';
+	import { page } from '$app/state';
 	import { tick } from 'svelte';
 	import Turnstile from '#lib/components/Turnstile.svelte';
+	import { normalizeKnownSince } from '#lib/certificates/renderCertificateBody.ts';
 	import { es } from '#lib/i18n/es.ts';
-	import { MARITAL_STATUSES } from '#lib/text/genderAgreement.ts';
 	import {
+		isMaritalStatus,
+		MARITAL_STATUSES,
+		maritalStatusWord,
+		type MaritalStatus
+	} from '#lib/text/genderAgreement.ts';
+	import {
+		normalizeNationalId,
 		REQUEST_FIELDS,
 		validateCertificateRequest,
 		type RequestErrors,
-		type RequestField
+		type RequestField,
+		type RequestValues
 	} from '#lib/validation/certificateRequest.ts';
+	import { formatVenezuelanPhone } from '#lib/whatsapp.ts';
 	import type { PageProps } from './$types';
 
 	let { data, form }: PageProps = $props();
 	const t = es.request;
+	const w = t.wizard;
 
-	/** In the order the fields appear, which is also the order of the error summary. */
-	const LABELS: Record<RequestField, string> = {
-		certificate_type_id: t.certificateType,
-		national_id: t.resident.nationalId,
-		gender: t.resident.gender,
-		first_names: t.resident.firstNames,
-		last_names: t.resident.lastNames,
-		marital_status: t.resident.maritalStatus,
-		occupation: t.resident.occupation,
-		street_address: t.resident.streetAddress,
-		house_number: t.resident.houseNumber,
-		phone: t.resident.phone,
-		known_since_text: t.knownSince
-	};
+	const STEPS = [
+		{ id: 'type', fields: ['certificate_type_id'] },
+		{ id: 'identity', fields: ['national_id', 'first_names', 'last_names'] },
+		{ id: 'about', fields: ['gender', 'marital_status', 'occupation'] },
+		{ id: 'home', fields: ['street_address', 'house_number', 'known_since_text'] },
+		{ id: 'contact', fields: ['phone'] },
+		{ id: 'review', fields: [] }
+	] as const satisfies readonly { id: keyof typeof w.steps; fields: readonly RequestField[] }[];
+	const REVIEW = STEPS.length - 1;
+
+	const step = $derived(Math.min(page.state.step ?? 0, REVIEW));
+	const fromReview = $derived(page.state.fromReview === true && step !== REVIEW);
+	const current = $derived(STEPS[step]);
+
+	function initialValues(): RequestValues {
+		const values = Object.fromEntries(REQUEST_FIELDS.map((field) => [field, ''])) as RequestValues;
+		values.certificate_type_id = data.preselectedTypeId ?? '';
+		return { ...values, ...form?.values };
+	}
+	let values = $state(initialValues());
+	let errors = $state<RequestErrors>({});
 
 	let submitting = $state(false);
 	/** Bumped after each submit: Turnstile tokens are single-use. */
 	let attempts = $state(0);
-	let formElement = $state<HTMLFormElement>();
-	let summaryElement = $state<HTMLElement | null>(null);
+	let headingElement = $state<HTMLElement>();
 	let alertElement = $state<HTMLElement | null>(null);
 
-	// Errors on screen: the server's after a submit, then kept up to date while the person types.
-	let errors = $derived<RequestErrors>({ ...(form?.errors ?? {}) });
-	const FIELD_ORDER = Object.keys(LABELS) as RequestField[];
-	const CHOICE_FIELDS: readonly RequestField[] = [
-		'certificate_type_id',
-		'gender',
-		'marital_status'
-	];
-	const errorFields = $derived(FIELD_ORDER.filter((field) => errors[field]));
-	/** "Completa «Nombres»." reads better in a list than repeating "Este campo es obligatorio". */
-	const summaryText = (field: RequestField) =>
-		errors[field] === 'required'
-			? (CHOICE_FIELDS.includes(field) ? t.summaryChoose : t.summaryRequired).replace(
-					'{field}',
-					LABELS[field]
-				)
-			: `${LABELS[field]}: ${message(field)}`;
 	/** Problems not tied to a field (duplicate request, CAPTCHA, rate limit). */
 	const generalMessage = $derived(
 		form?.message && Object.keys(form?.errors ?? {}).length === 0 ? form.message : null
 	);
+	const stepHasErrors = $derived(
+		(current.fields as readonly RequestField[]).some((field) => errors[field])
+	);
 
-	const isRequestField = (name: string): name is RequestField =>
-		(REQUEST_FIELDS as readonly string[]).includes(name);
-
-	/**
-	 * Same rules as the server. A field is checked when the person leaves it with something
-	 * typed (empty fields are only flagged on submit, so tabbing through doesn't nag), and
-	 * re-checked as they fix it.
-	 */
-	function recheck(field: RequestField, mode: 'leave' | 'fix') {
-		if (!formElement) return;
-		const input = new FormData(formElement);
-		if (mode === 'leave' && !String(input.get(field) ?? '').trim()) return;
-		if (mode === 'fix' && !errors[field]) return;
-		const result = validateCertificateRequest(input);
-		errors = { ...errors, [field]: result.ok ? undefined : result.errors[field] };
+	function toFormData(): FormData {
+		const formData = new FormData();
+		for (const field of REQUEST_FIELDS) formData.set(field, values[field]);
+		return formData;
 	}
 
-	const onEvent = (mode: 'leave' | 'fix') => (event: Event) => {
+	/** Same rules as the server, applied only to `fields`. Returns the fields with a problem. */
+	function check(fields: readonly RequestField[]): RequestField[] {
+		const result = validateCertificateRequest(toFormData());
+		const found: RequestErrors = result.ok ? {} : result.errors;
+		errors = { ...errors, ...Object.fromEntries(fields.map((field) => [field, found[field]])) };
+		return fields.filter((field) => found[field]);
+	}
+
+	function go(target: number, options: { fromReview?: boolean } = {}) {
+		pushState('', { step: target, fromReview: options.fromReview });
+	}
+
+	async function next() {
+		const invalid = check(current.fields);
+		if (invalid.length > 0) {
+			await tick();
+			document.getElementById(invalid[0])?.focus();
+			return;
+		}
+		go(fromReview ? REVIEW : step + 1);
+	}
+
+	function back() {
+		if (step > 0) history.back();
+	}
+
+	// Once a field shows an error, re-check it as the person fixes it.
+	function onFix(event: Event) {
 		const name = (event.target as HTMLInputElement | null)?.name ?? '';
-		if (isRequestField(name)) recheck(name, mode);
-	};
-
-	function focusField(event: MouseEvent, field: RequestField) {
-		event.preventDefault();
-		const element = document.getElementById(field);
-		element?.focus();
-		element?.closest('fieldset, label, div')?.scrollIntoView({ block: 'center' });
+		const field = REQUEST_FIELDS.find((candidate) => candidate === name);
+		if (field && errors[field]) check([field]);
 	}
 
-	const value = (field: RequestField) => form?.values?.[field] ?? '';
-	const selectedType = (id: string) =>
-		value('certificate_type_id')
-			? value('certificate_type_id') === id
-			: data.preselectedTypeId === id;
+	// Enter in a text box means "continue", not "send the whole form" from the middle of it.
+	function onKeydown(event: KeyboardEvent) {
+		if (event.key === 'Enter') {
+			event.preventDefault();
+			void next();
+		}
+	}
+
+	// Move focus to the new step's title so screen readers announce it and the page starts at
+	// the top. Not on first load: the page should not jump before the person does anything.
+	let shownStep: number | null = null;
+	$effect(() => {
+		const visible = step;
+		if (shownStep !== null && visible !== shownStep) {
+			void tick().then(() => {
+				window.scrollTo({ top: 0 });
+				headingElement?.focus();
+			});
+		}
+		shownStep = visible;
+	});
+
 	const message = (field: RequestField) => {
 		const code = errors[field];
-		return code ? es.formErrors[code] : undefined;
+		if (!code) return undefined;
+		const required = (w.required as Partial<Record<RequestField, string>>)[field];
+		return (code === 'required' || code === 'invalid_option') && required
+			? required
+			: es.formErrors[code];
 	};
-	const describedBy = (field: RequestField, hint: boolean) =>
-		[hint && `${field}-hint`, errors[field] && `${field}-error`].filter(Boolean).join(' ') ||
-		undefined;
+	const describedBy = (field: RequestField, hints: number) =>
+		[
+			...Array.from({ length: hints }, (_, index) => `${field}-hint-${index}`),
+			errors[field] && `${field}-error`
+		]
+			.filter(Boolean)
+			.join(' ') || undefined;
 	const inputClass = (field: RequestField) =>
-		`mt-1 block w-full rounded-lg py-2.5 text-base ${
+		`mt-2 block w-full rounded-lg border-2 px-3 py-3 text-lg ${
 			errors[field]
 				? 'border-red-600 focus:border-red-600 focus:ring-red-600'
-				: 'border-slate-300 focus:border-blue-600 focus:ring-blue-600'
+				: 'border-slate-400 focus:border-blue-700 focus:ring-blue-700'
 		}`;
+	const choiceClass = (field: RequestField) =>
+		`flex min-h-14 cursor-pointer gap-3 rounded-xl border-2 bg-white px-4 py-3 text-lg transition-colors has-[:checked]:border-blue-700 has-[:checked]:bg-blue-50 has-[:focus-visible]:ring-4 has-[:focus-visible]:ring-blue-300 ${
+			errors[field] ? 'border-red-600' : 'border-slate-300 hover:border-slate-500'
+		}`;
+	const radioClass = 'size-6 shrink-0 text-blue-700 focus:ring-0 focus:ring-offset-0';
+
+	const capitalize = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
+	const gender = $derived(values.gender === 'F' || values.gender === 'M' ? values.gender : null);
+	/** "Soltera" for a woman, "Soltero" for a man; "Soltero(a)" until the person answers. */
+	const maritalLabel = (status: MaritalStatus) =>
+		gender ? capitalize(maritalStatusWord(status, gender)) : es.maritalStatus[status];
+
+	const notGiven = (text: string) => text.trim() || w.notGiven;
+	const review = $derived<{ label: string; value: string; step: number }[]>([
+		{
+			label: t.certificateType,
+			value:
+				data.certificateTypes.find((type) => type.id === values.certificate_type_id)?.title ?? '',
+			step: 0
+		},
+		{
+			label: w.fields.nationalId,
+			value: normalizeNationalId(values.national_id) ?? values.national_id,
+			step: 1
+		},
+		{ label: w.fields.firstNames, value: values.first_names, step: 1 },
+		{ label: w.fields.lastNames, value: values.last_names, step: 1 },
+		{ label: t.resident.gender, value: gender ? w.fields.genderOptions[gender] : '', step: 2 },
+		{
+			label: t.resident.maritalStatus,
+			value: isMaritalStatus(values.marital_status) ? maritalLabel(values.marital_status) : '',
+			step: 2
+		},
+		{ label: t.resident.occupation, value: notGiven(values.occupation), step: 2 },
+		{ label: w.fields.streetAddress, value: values.street_address, step: 3 },
+		{ label: w.fields.houseNumber, value: notGiven(values.house_number), step: 3 },
+		{ label: t.knownSince, value: normalizeKnownSince(values.known_since_text), step: 3 },
+		{ label: w.fields.phone, value: formatVenezuelanPhone(values.phone) ?? values.phone, step: 4 }
+	]);
 </script>
 
 <svelte:head>
-	<title>{t.title} · {data.council?.name ?? es.app.name}</title>
+	<title>{w.steps[current.id].title} · {t.title} · {data.council?.name ?? es.app.name}</title>
 </svelte:head>
 
-{#snippet labelText(field: RequestField, optional = false)}
-	<span class="block font-medium">
-		{LABELS[field]}
-		{#if optional}<span class="font-normal text-slate-500">{t.optional}</span>{/if}
-	</span>
-{/snippet}
-
-{#snippet hintAndError(field: RequestField, hint?: string)}
-	{#if hint}<p id="{field}-hint" class="mt-1 text-sm text-slate-500">{hint}</p>{/if}
+{#snippet hintsAndError(field: RequestField, hints: string[] = [])}
+	{#each hints as hint, index (index)}
+		<p id="{field}-hint-{index}" class="mt-1 text-base text-slate-600">{hint}</p>
+	{/each}
 	{#if message(field)}
-		<p id="{field}-error" class="mt-1 flex gap-1 text-sm font-medium text-red-700">
+		<p id="{field}-error" class="mt-2 flex gap-2 text-base font-semibold text-red-700">
 			<span aria-hidden="true">⚠</span>{message(field)}
 		</p>
 	{/if}
@@ -130,8 +207,9 @@
 
 {#snippet textField(
 	field: RequestField,
+	label: string,
 	options: {
-		hint?: string;
+		hints?: string[];
 		optional?: boolean;
 		type?: string;
 		autocomplete?: HTMLInputElement['autocomplete'];
@@ -141,204 +219,216 @@
 	} = {}
 )}
 	<div>
-		<label for={field}>{@render labelText(field, options.optional)}</label>
+		<label for={field} class="block text-lg font-semibold">
+			{label}
+			{#if options.optional}<span class="font-normal text-slate-600">{t.optional}</span>{/if}
+		</label>
+		{@render hintsAndError(field, options.hints)}
 		<input
 			id={field}
 			name={field}
 			type={options.type ?? 'text'}
-			value={value(field)}
+			bind:value={values[field]}
 			required={!options.optional}
 			maxlength={options.maxlength}
 			autocomplete={options.autocomplete}
 			inputmode={options.inputmode}
 			autocapitalize={options.autocapitalize}
+			spellcheck="false"
+			onkeydown={onKeydown}
 			aria-invalid={errors[field] ? 'true' : undefined}
-			aria-describedby={describedBy(field, !!options.hint)}
+			aria-describedby={describedBy(field, options.hints?.length ?? 0)}
 			class={inputClass(field)}
 		/>
-		{@render hintAndError(field, options.hint)}
 	</div>
 {/snippet}
 
-<h1 class="text-3xl font-bold tracking-tight">{t.title}</h1>
-<p class="mt-2 text-lg text-slate-600">{t.description}</p>
-<p class="mt-1 text-sm text-slate-500">{t.meta}</p>
+<p class="text-base font-medium text-slate-600">{t.title}</p>
 
 {#if data.certificateTypes.length === 0}
-	<p class="mt-6 rounded-lg bg-amber-50 p-4 text-amber-900">{t.noTypes}</p>
+	<p class="mt-6 rounded-lg bg-amber-50 p-4 text-lg text-amber-900">{t.noTypes}</p>
 {:else}
-	{#if errorFields.length > 0 && form?.errors}
-		<div
-			bind:this={summaryElement}
-			tabindex="-1"
-			role="alert"
-			aria-labelledby="error-summary-title"
-			class="mt-6 rounded-lg border-2 border-red-600 bg-red-50 p-4 outline-none focus-visible:ring-4 focus-visible:ring-red-300"
-		>
-			<h2 id="error-summary-title" class="font-semibold text-red-800">{t.errorSummary}</h2>
-			<ul class="mt-2 list-inside list-disc space-y-1">
-				{#each errorFields as field (field)}
-					<li>
-						<a
-							href="#{field}"
-							onclick={(event) => focusField(event, field)}
-							class="text-red-800 underline hover:no-underline"
-						>
-							{summaryText(field)}
-						</a>
-					</li>
-				{/each}
-			</ul>
+	<div class="mt-3">
+		<p class="text-base font-semibold text-blue-800">
+			{w.stepOf.replace('{n}', String(step + 1)).replace('{total}', String(STEPS.length))}
+		</p>
+		<div class="mt-2 flex gap-1.5" aria-hidden="true">
+			{#each STEPS as item, index (item.id)}
+				<span class="h-2 flex-1 rounded-full {index <= step ? 'bg-blue-700' : 'bg-slate-200'}"
+				></span>
+			{/each}
 		</div>
-	{/if}
-	{#if generalMessage}
+	</div>
+
+	<h1
+		bind:this={headingElement}
+		id="step-title"
+		tabindex="-1"
+		class="mt-6 text-3xl font-bold tracking-tight outline-none"
+	>
+		{w.steps[current.id].title}
+	</h1>
+	<p class="mt-2 text-lg text-slate-700">{w.steps[current.id].intro}</p>
+
+	{#if stepHasErrors}
 		<p
-			bind:this={alertElement}
-			tabindex="-1"
-			role="alert"
-			class="mt-6 rounded-lg border-2 border-red-600 bg-red-50 p-4 text-red-800 outline-none"
+			class="mt-4 rounded-lg border-2 border-red-600 bg-red-50 p-3 text-base font-semibold text-red-800"
 		>
-			{generalMessage}
+			{w.stepErrors}
 		</p>
 	{/if}
 
 	<form
-		bind:this={formElement}
 		method="POST"
 		novalidate
-		class="mt-8 space-y-10"
-		onfocusout={onEvent('leave')}
-		oninput={onEvent('fix')}
-		onchange={onEvent('fix')}
+		class="mt-6"
+		oninput={onFix}
+		onchange={onFix}
 		use:enhance={() => {
 			submitting = true;
 			return async ({ result, update }) => {
 				await update({ reset: false });
 				submitting = false;
 				attempts += 1;
-				if (result.type === 'failure') {
+				if (result.type !== 'failure') return;
+				const found = (result.data?.errors ?? {}) as RequestErrors;
+				errors = { ...found };
+				const first = STEPS.findIndex((item) =>
+					(item.fields as readonly RequestField[]).some((field) => found[field])
+				);
+				if (first >= 0) go(first, { fromReview: true });
+				else {
 					await tick();
-					(summaryElement ?? alertElement)?.focus();
+					alertElement?.focus();
 				}
 			};
 		}}
 	>
-		<fieldset aria-describedby={describedBy('certificate_type_id', false)}>
-			<legend class="text-xl font-semibold">
-				<span class="text-blue-700">1.</span>
-				{t.sections.type}
-			</legend>
-			<div class="mt-4 grid gap-3">
+		<div hidden={step !== 0}>
+			<div
+				role="radiogroup"
+				aria-labelledby="step-title"
+				aria-describedby={describedBy('certificate_type_id', 0)}
+				class="grid gap-3"
+			>
 				{#each data.certificateTypes as type, index (type.id)}
-					<label
-						class="flex cursor-pointer items-start gap-3 rounded-xl border-2 bg-white p-4 transition-colors has-[:checked]:border-blue-700 has-[:checked]:bg-blue-50 has-[:focus-visible]:ring-4 has-[:focus-visible]:ring-blue-300 {errors.certificate_type_id
-							? 'border-red-600'
-							: 'border-slate-200 hover:border-slate-400'}"
-					>
+					<label class="{choiceClass('certificate_type_id')} items-start py-4">
 						<input
 							id={index === 0 ? 'certificate_type_id' : undefined}
 							type="radio"
 							name="certificate_type_id"
 							value={type.id}
-							checked={selectedType(type.id)}
-							required
-							class="mt-1 size-5 text-blue-700 focus:ring-0 focus:ring-offset-0"
+							bind:group={values.certificate_type_id}
+							class="mt-0.5 {radioClass}"
 						/>
 						<span>
 							<span class="block font-semibold">{type.title}</span>
-							<span class="mt-0.5 block text-sm text-slate-600">
+							<span class="mt-1 block text-base text-slate-700">
 								{es.certificateTypeDescriptions[type.code]}
 							</span>
 						</span>
 					</label>
 				{/each}
 			</div>
-			{@render hintAndError('certificate_type_id')}
-		</fieldset>
+			{@render hintsAndError('certificate_type_id')}
+		</div>
 
-		<fieldset class="grid gap-5 sm:grid-cols-2">
-			<legend class="mb-4 text-xl font-semibold">
-				<span class="text-blue-700">2.</span>
-				{t.sections.personal}
-			</legend>
-			{@render textField('national_id', {
-				hint: t.nationalIdFormat,
+		<div hidden={step !== 1} class="space-y-6">
+			{@render textField('national_id', w.fields.nationalId, {
+				hints: [w.fields.nationalIdHint, w.fields.nationalIdForeign],
 				maxlength: 20,
 				autocomplete: 'off',
 				autocapitalize: 'off'
 			})}
-			<div>
-				<label for="gender">{@render labelText('gender')}</label>
-				<select
-					id="gender"
-					name="gender"
-					required
-					aria-invalid={errors.gender ? 'true' : undefined}
-					aria-describedby={describedBy('gender', false)}
-					class={inputClass('gender')}
-				>
-					<option value="" selected={!value('gender')} disabled>{t.choose}</option>
-					<option value="F" selected={value('gender') === 'F'}>{es.gender.F}</option>
-					<option value="M" selected={value('gender') === 'M'}>{es.gender.M}</option>
-				</select>
-				{@render hintAndError('gender')}
-			</div>
-			{@render textField('first_names', {
+			{@render textField('first_names', w.fields.firstNames, {
+				hints: [w.fields.firstNamesHint],
 				autocomplete: 'given-name',
 				autocapitalize: 'words',
 				maxlength: 80
 			})}
-			{@render textField('last_names', {
+			{@render textField('last_names', w.fields.lastNames, {
+				hints: [w.fields.lastNamesHint],
 				autocomplete: 'family-name',
 				autocapitalize: 'words',
 				maxlength: 80
 			})}
-			<div>
-				<label for="marital_status">{@render labelText('marital_status')}</label>
-				<select
-					id="marital_status"
-					name="marital_status"
-					required
-					aria-invalid={errors.marital_status ? 'true' : undefined}
-					aria-describedby={describedBy('marital_status', false)}
-					class={inputClass('marital_status')}
-				>
-					<option value="" selected={!value('marital_status')} disabled>{t.choose}</option>
-					{#each MARITAL_STATUSES as status (status)}
-						<option value={status} selected={value('marital_status') === status}>
-							{es.maritalStatus[status]}
-						</option>
-					{/each}
-				</select>
-				{@render hintAndError('marital_status')}
-			</div>
-			{@render textField('occupation', { optional: true, maxlength: 80 })}
-		</fieldset>
+		</div>
 
-		<fieldset class="grid gap-5 sm:grid-cols-2">
-			<legend class="mb-4 text-xl font-semibold">
-				<span class="text-blue-700">3.</span>
-				{t.sections.address}
-			</legend>
-			{@render textField('street_address', {
+		<div hidden={step !== 2} class="space-y-8">
+			<fieldset aria-describedby={describedBy('gender', 0)}>
+				<legend class="text-lg font-semibold">{w.fields.gender}</legend>
+				{@render hintsAndError('gender')}
+				<div class="mt-2 grid grid-cols-2 gap-3">
+					{#each ['F', 'M'] as const as option, index (option)}
+						<label class="{choiceClass('gender')} items-center">
+							<input
+								id={index === 0 ? 'gender' : undefined}
+								type="radio"
+								name="gender"
+								value={option}
+								bind:group={values.gender}
+								class={radioClass}
+							/>
+							{w.fields.genderOptions[option]}
+						</label>
+					{/each}
+				</div>
+			</fieldset>
+
+			<fieldset aria-describedby={describedBy('marital_status', 0)}>
+				<legend class="text-lg font-semibold">{w.fields.maritalStatus}</legend>
+				{@render hintsAndError('marital_status')}
+				<div class="mt-2 grid gap-3 sm:grid-cols-2">
+					{#each MARITAL_STATUSES as status, index (status)}
+						<label class="{choiceClass('marital_status')} items-center">
+							<input
+								id={index === 0 ? 'marital_status' : undefined}
+								type="radio"
+								name="marital_status"
+								value={status}
+								bind:group={values.marital_status}
+								class={radioClass}
+							/>
+							{maritalLabel(status)}
+						</label>
+					{/each}
+				</div>
+			</fieldset>
+
+			{@render textField('occupation', w.fields.occupation, {
+				hints: [w.fields.occupationHint],
+				optional: true,
+				maxlength: 80
+			})}
+		</div>
+
+		<div hidden={step !== 3} class="space-y-6">
+			{@render textField('street_address', w.fields.streetAddress, {
+				hints: [w.fields.streetAddressHint],
 				autocomplete: 'address-line1',
 				maxlength: 160
 			})}
-			{@render textField('house_number', {
-				hint: t.houseNumberFormat,
+			{@render textField('house_number', w.fields.houseNumber, {
+				hints: [w.fields.houseNumberHint],
 				optional: true,
 				autocomplete: 'address-line2',
 				maxlength: 40
 			})}
-			{@render textField('phone', {
-				hint: t.phoneFormat,
+			{@render textField('known_since_text', w.fields.knownSince, {
+				hints: [w.fields.knownSinceHint],
+				maxlength: 60
+			})}
+		</div>
+
+		<div hidden={step !== 4}>
+			{@render textField('phone', w.fields.phone, {
+				hints: [w.fields.phoneHint],
 				type: 'tel',
 				autocomplete: 'tel-national',
 				inputmode: 'tel',
 				maxlength: 20
 			})}
-			{@render textField('known_since_text', { hint: t.knownSinceFormat, maxlength: 60 })}
-		</fieldset>
+		</div>
 
 		<!-- Honeypot: hidden from people and assistive tech; bots tend to fill it. -->
 		<div class="hidden" aria-hidden="true">
@@ -348,36 +438,94 @@
 			</label>
 		</div>
 
-		<div class="space-y-4 border-t border-slate-200 pt-6">
-			{#if data.turnstileSiteKey}
-				<Turnstile
-					siteKey={data.turnstileSiteKey}
-					label={t.captchaLabel}
-					unavailableMessage={t.captchaUnavailable}
-					resetKey={attempts}
-				/>
+		{#if step === REVIEW}
+			{#if generalMessage}
+				<p
+					bind:this={alertElement}
+					tabindex="-1"
+					role="alert"
+					class="mb-6 rounded-lg border-2 border-red-600 bg-red-50 p-4 text-lg text-red-800 outline-none"
+				>
+					{generalMessage}
+				</p>
 			{/if}
-			<p class="text-sm text-slate-500">{es.public.privacy}</p>
-			<button
-				disabled={submitting}
-				aria-busy={submitting}
-				class="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-700 px-6 py-3 text-lg font-semibold text-white shadow-sm hover:bg-blue-800 focus-visible:ring-4 focus-visible:ring-blue-300 focus-visible:outline-none disabled:opacity-60 sm:w-auto"
-			>
-				{#if submitting}
-					<svg class="size-5 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-						<circle
-							cx="12"
-							cy="12"
-							r="10"
-							stroke="currentColor"
-							stroke-opacity=".3"
-							stroke-width="4"
-						></circle>
-						<path d="M22 12a10 10 0 0 0-10-10" stroke="currentColor" stroke-width="4"></path>
-					</svg>
+
+			<dl class="divide-y divide-slate-200 rounded-xl border-2 border-slate-200 bg-white">
+				{#each review as row (row.label)}
+					<div class="flex items-start justify-between gap-4 px-4 py-3">
+						<div class="min-w-0">
+							<dt class="text-base text-slate-600">{row.label}</dt>
+							<dd class="text-lg font-semibold break-words">{row.value}</dd>
+						</div>
+						<button
+							type="button"
+							onclick={() => go(row.step, { fromReview: true })}
+							aria-label={w.changeLabel.replace('{field}', row.label.toLowerCase())}
+							class="shrink-0 rounded-md px-2 py-2 text-base font-semibold text-blue-700 underline hover:no-underline focus-visible:ring-4 focus-visible:ring-blue-300 focus-visible:outline-none"
+						>
+							{w.change}
+						</button>
+					</div>
+				{/each}
+			</dl>
+
+			<div class="mt-6 space-y-4">
+				{#if data.turnstileSiteKey}
+					<Turnstile
+						siteKey={data.turnstileSiteKey}
+						label={t.captchaLabel}
+						unavailableMessage={t.captchaUnavailable}
+						resetKey={attempts}
+					/>
 				{/if}
-				{submitting ? t.submitting : t.submit}
-			</button>
+				<p class="text-base text-slate-600">{es.public.privacy}</p>
+			</div>
+		{/if}
+
+		<div class="mt-8 flex flex-col gap-3 sm:flex-row-reverse sm:justify-between">
+			{#if step === REVIEW}
+				<button
+					disabled={submitting}
+					aria-busy={submitting}
+					class="flex min-h-14 w-full items-center justify-center gap-2 rounded-xl bg-green-700 px-8 text-xl font-semibold text-white shadow-sm hover:bg-green-800 focus-visible:ring-4 focus-visible:ring-green-300 focus-visible:outline-none disabled:opacity-60 sm:w-auto"
+				>
+					{#if submitting}
+						<svg class="size-6 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+							<circle
+								cx="12"
+								cy="12"
+								r="10"
+								stroke="currentColor"
+								stroke-opacity=".3"
+								stroke-width="4"
+							></circle>
+							<path d="M22 12a10 10 0 0 0-10-10" stroke="currentColor" stroke-width="4"></path>
+						</svg>
+					{/if}
+					{submitting ? t.submitting : t.submit}
+				</button>
+			{:else}
+				<button
+					type="button"
+					onclick={next}
+					class="flex min-h-14 w-full items-center justify-center gap-2 rounded-xl bg-blue-700 px-8 text-xl font-semibold text-white shadow-sm hover:bg-blue-800 focus-visible:ring-4 focus-visible:ring-blue-300 focus-visible:outline-none sm:w-auto"
+				>
+					{fromReview ? w.backToReview : w.next}
+					{#if !fromReview}<span aria-hidden="true">→</span>{/if}
+				</button>
+			{/if}
+			{#if step > 0}
+				<button
+					type="button"
+					onclick={back}
+					class="flex min-h-14 w-full items-center justify-center gap-2 rounded-xl border-2 border-slate-300 bg-white px-6 text-lg font-semibold text-slate-800 hover:bg-slate-50 focus-visible:ring-4 focus-visible:ring-blue-300 focus-visible:outline-none sm:w-auto"
+				>
+					<span aria-hidden="true">←</span>
+					{w.back}
+				</button>
+			{/if}
 		</div>
 	</form>
+
+	<p class="mt-10 rounded-lg bg-slate-100 p-4 text-base text-slate-700">{w.help}</p>
 {/if}

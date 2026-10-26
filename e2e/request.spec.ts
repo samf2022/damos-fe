@@ -11,34 +11,54 @@ test('without a Turnstile token the request is refused and nothing is saved', as
 	// Simulates a bot, or a browser that cannot load the widget.
 	await page.route('https://challenges.cloudflare.com/**', (route) => route.abort());
 	await open(page, '/request');
-	await expect(page.getByText(es.request.captchaUnavailable)).toBeVisible();
 	await fillRequestForm(page, '90000002');
+	await expect(page.getByText(es.request.captchaUnavailable)).toBeVisible();
 	await page.getByRole('button', { name: es.request.submit }).click();
 	await expectAlert(page, es.request.captchaFailed);
 	await expect(page).toHaveURL(/\/request$/);
-	await expect(page.getByLabel(es.request.resident.nationalId)).toHaveValue('V-90000002');
+	// Still on the review, with the data kept.
+	await expect(page.getByText('V-90000002')).toBeVisible();
 });
 
-test('a type chosen on the home page is preselected and missing data is listed', async ({
-	page
-}) => {
+test('the form goes one step at a time and explains what is missing', async ({ page }) => {
+	const w = es.request.wizard;
 	await open(page, '/');
 	// Each type card links to the form with that type chosen.
 	await page.locator('a[href*="tipo="]').first().click();
 	await expect(page).toHaveURL(/\/request\?tipo=/);
-	await expect(page.locator('input[name="cf-turnstile-response"]')).toHaveValue(/.+/, {
-		timeout: 20_000
-	});
+	await page.waitForLoadState('networkidle');
 	await expect(page.getByRole('radio', { checked: true })).toHaveCount(1);
+	await page.getByRole('button', { name: w.next }).click();
 
-	await page.getByRole('button', { name: es.request.submit }).click();
-	const summary = page.getByRole('alert').filter({ hasText: es.request.errorSummary });
-	await expect(summary).toBeFocused();
-	const nationalId = es.request.summaryRequired.replace('{field}', es.request.resident.nationalId);
-	await page.getByRole('link', { name: nationalId }).click();
-	await expect(page.getByLabel(es.request.resident.nationalId)).toBeFocused();
-	// The type stays chosen, so it is not in the list.
-	await expect(
-		page.getByRole('link', { name: es.request.summaryChoose.replace('{field}', es.request.type) })
-	).toHaveCount(0);
+	// Nothing typed: the step stays, says what to do and puts the cursor on the first box.
+	await expect(page.getByRole('heading', { name: w.steps.identity.title })).toBeFocused();
+	await page.getByRole('button', { name: w.next }).click();
+	await expect(page.getByText(w.required.national_id)).toBeVisible();
+	await expect(page.getByLabel(w.fields.nationalId)).toBeFocused();
+	await page.getByLabel(w.fields.nationalId).fill('12A');
+	await expect(page.getByText(es.formErrors.invalid_national_id)).toBeVisible();
+	await page.getByLabel(w.fields.nationalId).fill('12345678');
+	await expect(page.getByText(es.formErrors.invalid_national_id)).toHaveCount(0);
+
+	// The phone's back button goes to the previous step, not away from the form.
+	await page.goBack();
+	await expect(page.getByRole('heading', { name: w.steps.type.title })).toBeVisible();
+	await expect(page).toHaveURL(/\/request/);
+});
+
+test('a detail can be changed from the review without going through every step', async ({
+	page
+}) => {
+	const w = es.request.wizard;
+	await open(page, '/request');
+	await fillRequestForm(page, '90000006');
+	await page
+		.getByRole('button', { name: w.changeLabel.replace('{field}', w.fields.phone.toLowerCase()) })
+		.click();
+	await page.getByLabel(w.fields.phone).fill('04241112233');
+	await page.getByRole('button', { name: w.backToReview }).click();
+	await expect(page.getByRole('heading', { name: w.steps.review.title })).toBeVisible();
+	await expect(page.getByRole('definition').filter({ hasText: '0424-1112233' })).toBeVisible();
+	// Answers adapt to the person: "Soltera", not "Soltero(a)".
+	await expect(page.getByRole('definition').filter({ hasText: 'Soltera' })).toBeVisible();
 });
