@@ -112,7 +112,27 @@
 	{#if hasDiff}
 		<p class="border-t border-slate-200 px-3 py-2 text-sm text-amber-900">{t.differs}</p>
 	{/if}
+	{#if isPending}
+		<p class="border-t border-slate-200 px-3 py-2 text-sm">
+			<a
+				href="{resolve('/admin/residents/[id]', {
+					id: certificate.resident_id
+				})}?from={certificate.id}"
+				class="text-blue-700 hover:underline"
+			>
+				{t.editResident}
+			</a>
+		</p>
+	{/if}
 </section>
+
+{#if isPending && data.inForceSameType}
+	<p class="mt-4 rounded-md bg-amber-50 p-3 text-sm text-amber-900" role="status">
+		{t.inForceSameType
+			.replace('{serial}', data.inForceSameType.serial_number)
+			.replace('{date}', formatDate(data.inForceSameType.expires_at))}
+	</p>
+{/if}
 
 {#if isPending}
 	<div class="mt-8 grid gap-8 lg:grid-cols-[1fr_22rem]">

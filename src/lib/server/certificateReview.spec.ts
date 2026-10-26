@@ -77,6 +77,33 @@ describe('certificate review', () => {
 		expect(data?.signers.every((s) => s.is_default === 1)).toBe(true);
 	});
 
+	it('flags another in-force certificate of the same type', async () => {
+		const first = await submit(db);
+		expect((await getReviewData(db, first))?.inForceSameType).toBeNull();
+		// Approved now (not at NOW), so it is still in force whenever the test runs.
+		const approved = await approveCertificate(db, {
+			certificateId: first,
+			reviewerId,
+			signerIds: SIGNERS,
+			knownSinceText: 'más de 20 años',
+			updateResident: false
+		});
+		if (!approved.ok) throw new Error(approved.reason);
+
+		const second = await submit(db);
+		const data = await getReviewData(db, second);
+		expect(data?.inForceSameType).toEqual({
+			id: first,
+			serial_number: approved.serialNumber,
+			expires_at: expect.any(String)
+		});
+		await db.run(
+			"UPDATE certificates SET expires_at = '2020-01-01T00:00:00.000Z' WHERE id = ?",
+			first
+		);
+		expect((await getReviewData(db, second))?.inForceSameType).toBeNull();
+	});
+
 	it('approves: serial, code, frozen body, signer snapshot and expiry', async () => {
 		const id = await submit(db);
 		const result = await approveCertificate(db, {

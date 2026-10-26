@@ -19,7 +19,7 @@ export async function login(page: Page, username: string, password: string) {
 export async function fillRequestForm(
 	page: Page,
 	nationalIdNumber: string,
-	options: { type?: string; lastNames?: string } = {}
+	options: { type?: string; lastNames?: string; streetAddress?: string } = {}
 ) {
 	const t = es.request;
 	if (options.type) await page.getByRole('radio', { name: options.type }).check();
@@ -29,7 +29,7 @@ export async function fillRequestForm(
 	await page.getByLabel(t.resident.firstNames).fill('Prueba');
 	await page.getByLabel(t.resident.lastNames).fill(options.lastNames ?? 'Automatizada');
 	await page.getByLabel(t.resident.maritalStatus).selectOption('single');
-	await page.getByLabel(t.resident.streetAddress).fill('Calle de Pruebas');
+	await page.getByLabel(t.resident.streetAddress).fill(options.streetAddress ?? 'Calle de Pruebas');
 	await page.getByLabel(t.resident.phone).fill('0412-0000000');
 	await page.getByLabel(t.knownSince).fill('10');
 }

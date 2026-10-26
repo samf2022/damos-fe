@@ -8,7 +8,8 @@ export type FormErrorCode =
 	| 'invalid_name'
 	| 'invalid_option'
 	| 'invalid_phone'
-	| 'invalid_number';
+	| 'invalid_number'
+	| 'duplicate_national_id';
 
 export type FormErrors<Field extends string> = Partial<Record<Field, FormErrorCode>>;
 

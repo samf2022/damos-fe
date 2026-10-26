@@ -149,6 +149,9 @@ export const es = {
 			residentRecord: 'Ficha actual',
 			differs: 'Lo enviado difiere de la ficha del residente.',
 			updateResident: 'Actualizar la ficha del residente con los datos enviados',
+			editResident: 'Corregir datos del residente',
+			inForceSameType:
+				'Esta persona ya tiene una constancia vigente de este tipo: N.º {serial}, vence el {date}.',
 			fields: {
 				nationalId: 'Cédula',
 				fullName: 'Nombre completo',
@@ -217,7 +220,44 @@ export const es = {
 				known_since_required: 'Indica el tiempo viviendo en la comunidad.'
 			}
 		},
-		residents: { title: 'Residentes' },
+		residents: {
+			title: 'Residentes',
+			description:
+				'Personas que han pedido constancias. Corrige aquí sus datos para que las próximas constancias salgan bien.',
+			searchLabel: 'Buscar residente',
+			searchPlaceholder: 'Cédula o nombre',
+			search: 'Buscar',
+			empty: 'No hay residentes con esa búsqueda.',
+			columns: {
+				name: 'Nombre',
+				nationalId: 'Cédula',
+				phone: 'Teléfono',
+				certificates: 'Constancias',
+				lastRequest: 'Última solicitud'
+			},
+			previous: 'Anterior',
+			next: 'Siguiente',
+			pageOf: 'Página {page} de {pages}',
+			back: 'Volver a residentes',
+			backToRequest: 'Volver a la solicitud',
+			dataTitle: 'Datos del residente',
+			historyTitle: 'Constancias',
+			noCertificates: 'Todavía no tiene constancias.',
+			inForce: 'Vigente hasta',
+			expired: 'Vencida',
+			serial: 'N.º',
+			submitted: 'Solicitada el',
+			inForceSummary: 'Constancias vigentes:',
+			applyToPending:
+				'Aplicar también a sus {n} solicitudes pendientes (se emitirán con estos datos)',
+			pendingHint:
+				'Las constancias ya emitidas no cambian. Las solicitudes pendientes conservan los datos enviados, salvo que marques la casilla.',
+			save: 'Guardar datos',
+			saving: 'Guardando…',
+			saved: 'Datos guardados.',
+			savedWithPending: 'Datos guardados y aplicados a {n} solicitudes pendientes.',
+			notFound: 'El residente no existe.'
+		},
 		signers: {
 			title: 'Firmantes',
 			description:
@@ -407,7 +447,8 @@ export const es = {
 		invalid_name: 'Usa solo letras, espacios, apóstrofos o guiones.',
 		invalid_option: 'Selecciona una opción de la lista.',
 		invalid_phone: 'Escribe un teléfono venezolano válido, por ejemplo 0412-1234567.',
-		invalid_number: 'Escribe un número válido.'
+		invalid_number: 'Escribe un número válido.',
+		duplicate_national_id: 'Ya existe otro residente con esta cédula.'
 	} satisfies Record<FormErrorCode, string>,
 	errors: {
 		notFound: 'Página no encontrada',

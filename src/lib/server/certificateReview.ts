@@ -60,6 +60,8 @@ export interface ReviewData {
 	council: CouncilSettingsRow | null;
 	/** Active signers, defaults of the type first. */
 	signers: ReviewSigner[];
+	/** Another certificate of the same type for this resident that is still in force. */
+	inForceSameType: { id: string; serial_number: string; expires_at: string } | null;
 	/** Signers frozen at approval time. */
 	issuedSigners: {
 		full_name: string;
@@ -81,7 +83,7 @@ export async function getReviewData(db: Db, certificateId: string): Promise<Revi
 	);
 	if (!certificate) return null;
 
-	const [residentRow, council, signers, issuedSigners] = await Promise.all([
+	const [residentRow, council, signers, issuedSigners, inForceSameType] = await Promise.all([
 		db.first<{
 			national_id: string;
 			first_names: string;
@@ -109,6 +111,16 @@ export async function getReviewData(db: Db, certificateId: string): Promise<Revi
 			`SELECT full_name, short_name, role_title, phone FROM certificate_signers
 			  WHERE certificate_id = ? ORDER BY display_order`,
 			certificateId
+		),
+		db.first<NonNullable<ReviewData['inForceSameType']>>(
+			`SELECT id, serial_number, expires_at FROM certificates
+			  WHERE resident_id = ? AND certificate_type_id = ? AND id <> ?
+			    AND status = 'approved' AND expires_at > ?
+			  ORDER BY expires_at DESC LIMIT 1`,
+			certificate.resident_id,
+			certificate.certificate_type_id,
+			certificateId,
+			nowIso()
 		)
 	]);
 
@@ -127,7 +139,7 @@ export async function getReviewData(db: Db, certificateId: string): Promise<Revi
 			}
 		: snapshot;
 
-	return { certificate, snapshot, resident, council, signers, issuedSigners };
+	return { certificate, snapshot, resident, council, signers, issuedSigners, inForceSameType };
 }
 
 export type ReviewFailure =
